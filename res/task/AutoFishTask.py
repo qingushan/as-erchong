@@ -93,173 +93,6 @@ class AutoFishTask(BaseTask):
         self.sleep(2)
         print("成功返回家")
 
-    def go_to_level_old(self,map_name):
-        # 前往副本
-        print(f"开始前往钓鱼地点---{map_name}")
-        self.go_home()
-
-        self.click_color_to_color(common_color,"主界面左上角菜单",common_color,"左上角红色退出",x=123,y=92)
-        self.sleep(2)
-        if map_name == '冰湖城':
-            self.click(1213,205,random_range=0)
-            self.sleep(3)
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                for i in range(3):
-                    res = self.is_text_re_in_ocr(rect=[646,66,1271,715],pattern="风语")
-                    if res:
-                        self.click(res[0].center_x,res[0].center_y,random_range=0)
-                        self.sleep(2)
-                        break
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                print("地图识别失败")
-                return False
-            
-            self.click(673,53,random_range=0)
-            self.sleep(2)
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                print("地图识别失败")
-                return False
-
-            self.click(1071,654,random_range=0)
-            self.sleep(10)
-            self.await_until_color(common_color,"角色血条-绿色",time_out=120)
-            print("传送成功")
-
-            for i in range(20):
-                res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-                if res:
-                    break
-                self.walk_to_w(300)
-                self.sleep(1)
-
-            res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-            if not res:
-                print("未找到钓鱼入口")
-                return False
-
-            self.click_until_color(common_color,"左上角红色退出",783,357)
-            self.sleep(1)
-            res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
-            if not res:
-                self.is_have_easy = True
-                print("悠闲钓鱼！！")
-            else:
-                print("没有悠闲")
-            print(f"成功进入{map_name}钓点")
-            self.sleep(1)
-
-            self.get_fish_bait()
-            return True
-        elif map_name == '净界岛':
-            self.sleep(1)
-            self.click(993,659,random_range=0)
-            self.sleep(3)
-            self.click(988,110,random_range=0)
-            self.sleep(3)
-            self.click(973,175,random_range=0)
-            self.sleep(4)
-            self.click(215,636,random_range=0)
-            self.sleep(3)
-            self.click(691,603,random_range=0)
-            self.sleep(2)
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                for i in range(3):
-                    res = self.is_text_re_in_ocr(rect=[561,60,1268,714],pattern="鱼")
-                    if res:
-                        self.click(res[0].center_x,res[0].center_y,random_range=0)
-                        self.sleep(2)
-                        break
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                print("地图识别失败")
-                return False
-
-            self.click(1071,654,random_range=0)
-            self.sleep(10)
-            self.await_until_color(common_color,"角色血条-绿色",time_out=120)
-            print("传送成功")
-
-            for i in range(20):
-                res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-                if res:
-                    break
-                self.walk_to_w(300)
-                self.sleep(1)
-
-            res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-            if not res:
-                print("未找到钓鱼入口")
-                return False
-
-            self.click_until_color(common_color,"左上角红色退出",783,357)
-            self.sleep(1)
-            res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
-            if not res:
-                self.is_have_easy = True
-                print("悠闲钓鱼！！")
-            else:
-                print("没有悠闲")
-            print(f"成功进入{map_name}钓点")
-            self.sleep(1)
-
-            self.get_fish_bait()
-            return True
-        elif map_name == '下水道':
-            self.sleep(1)
-            self.click(993,659,random_range=0)
-            self.sleep(3)
-            self.click(991,304,random_range=0)
-            self.sleep(3)
-            self.click(486,145,random_range=0)
-            self.sleep(3)
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                for i in range(3):
-                    res = self.is_text_re_in_ocr(rect=[561,60,1268,714],pattern="鱼")
-                    if res:
-                        self.click(res[0].center_x,res[0].center_y,random_range=0)
-                        self.sleep(2)
-                        break
-            res = self.find_my_color(common_color,"地图传送")
-            if not res:
-                print("地图识别失败")
-                return False
-
-            self.click(1071,654,random_range=0)
-            self.sleep(10)
-            self.await_until_color(common_color,"角色血条-绿色",time_out=120)
-            print("传送成功")
-
-            for i in range(20):
-                res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-                if res:
-                    break
-                self.walk_to_w(300)
-                self.sleep(1)
-
-            res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
-            if not res:
-                print("未找到钓鱼入口")
-                return False
-
-            self.click_until_color(common_color,"左上角红色退出",783,357)
-            self.sleep(1)
-            res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
-            if not res:
-                self.is_have_easy = True
-                print("悠闲钓鱼！！")
-            else:
-                print("没有悠闲")
-            print(f"成功进入{map_name}钓点")
-            self.sleep(1)
-
-            self.get_fish_bait()
-            return True
-
     def go_to_level(self,map_name):
         # 前往副本
         print(f"开始前往钓鱼地点---{map_name}")
@@ -534,33 +367,42 @@ class AutoFishTask(BaseTask):
 
             self.now_map = man_name
             while 1:
-                self.refresh_log()
-
-                if self.level_finish_count >= self.level_max_count:
-                    print(f"任务完成,计划执行 {self.level_max_count} 次,当前已完成 {self.level_finish_count} 次")
-                    self.level_exit()
-                    break
-                
-                # 判断是否需要整点去执行密函
-                if self.uiconfig['refresh_time_is_execute_mihan'] == 'on':
-                    res = self.is_refresh_time_execute_mihan()
-                    if res:
+                if self.uiconfig["fish_insane"] == 'on':
+                    # 疯狂钓鱼
+                    # 判断是还有鱼，没有则退出
+                    if self.is_text_re_in_ocr(rect=[381,34,908,596],pattern="水中暂时无鱼"):
+                        print("当前钓点已无鱼，退出")
                         self.level_exit()
-                        return True
-
-                # 判断是否还有鱼饵
-                self.get_fish_bait()
-
-                res = self.swing_the_rod()
-                if not res:
-                    self.level_exit()
-                    break
-
-                res = self.fishing()
-                if res:
-                    self.level_finish_count += 1
-                    self.level_ok_count += 1
+                        break
+                    self.click(x=1146,y=586,after_sleep=0.5)
                 else:
-                    self.level_finish_count += 1
-                    self.level_faile_count += 1
+                    self.refresh_log()
+
+                    if self.level_finish_count >= self.level_max_count:
+                        print(f"任务完成,计划执行 {self.level_max_count} 次,当前已完成 {self.level_finish_count} 次")
+                        self.level_exit()
+                        break
+
+                    # 判断是否需要整点去执行密函
+                    if self.uiconfig['refresh_time_is_execute_mihan'] == 'on':
+                        res = self.is_refresh_time_execute_mihan()
+                        if res:
+                            self.level_exit()
+                            return True
+
+                    # 判断是否还有鱼饵
+                    self.get_fish_bait()
+
+                    res = self.swing_the_rod()
+                    if not res:
+                        self.level_exit()
+                        break
+
+                    res = self.fishing()
+                    if res:
+                        self.level_finish_count += 1
+                        self.level_ok_count += 1
+                    else:
+                        self.level_finish_count += 1
+                        self.level_faile_count += 1
 

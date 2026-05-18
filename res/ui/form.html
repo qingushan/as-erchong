@@ -87,6 +87,45 @@
             margin-left: 5px;
         }
 
+        .reward-panel {
+            max-width: 360px;
+            margin: 0 auto;
+            padding: 8px 16px 4px;
+            text-align: center;
+            color: #666;
+        }
+
+        .reward-title {
+            margin-bottom: 8px;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .reward-desc {
+            margin-bottom: 6px;
+            line-height: 1.8;
+            font-size: 13px;
+        }
+
+        .reward-code {
+            width: 180px;
+            max-width: 58%;
+            height: auto;
+            display: inline-block;
+            margin: 12px 0 8px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 6px;
+            background: #fff;
+        }
+
+        .reward-tip {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #999;
+        }
+
         /*      仅针对【任务菜单】的特殊修正           */
         /* ========================================= */
 
@@ -204,6 +243,7 @@
             <li class="layui-this">任务</li>
             <li>全局配置</li>
             <li>关于脚本</li>
+            <li>打赏</li>
             <li>日常任务</li>
             <li>迷津</li>
             <li>夜航手册</li>
@@ -370,6 +410,22 @@
                             <button type="button" class="layui-btn layui-btn-primary layui-btn-radius" id="btn_show_logs">
                                 <i class="layui-icon layui-icon-list"></i> 更新日志
                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 打赏 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">打赏</div>
+                    <div class="layui-card-body">
+                        <div class="reward-panel">
+                            <div class="reward-title">感谢支持</div>
+                            <p class="reward-desc">脚本会继续免费分享，用得顺手就是对我最大的鼓励。</p>
+                            <p class="reward-desc">如果它确实帮你省了时间，也欢迎随缘打赏一杯快乐水。</p>
+                            <img class="reward-code" src="../img/code.png" alt="收款码">
+                            <p class="reward-tip">感谢每一份支持，我会继续维护和优化。</p>
                         </div>
                     </div>
                 </div>
@@ -1348,7 +1404,12 @@
                                 <i class="layui-icon layui-icon-tips"></i> 当没有鱼饵或者当前钓点钓鱼次数到达上限后会自动结束当前钓点
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 推荐关闭游戏【自动进入联机区域】，以免影响寻路以及识别
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【疯狂钓鱼】，快速钓鱼，魔灵必须携带悠闲，鱼竿最高品质。当勾选时钓鱼计数将失效，当一个钓点的鱼钓完后会自动切换下一个钓点
                             </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="fish_insane" title="疯狂钓鱼" value="on">
                         </div>
                         <div class="layui-card-body">
                             <label>请选择下方钓点，可多选。钓点执行顺序：冰湖城->净界岛->下水道</label>
@@ -1554,91 +1615,41 @@
         var layer = layui.layer;
         var element = layui.element; // 必须定义
 
-        // --- 新增：更新日志数据 ---
-        var updateLogs = [
-            {
-                version: 'v1.0.3.22',
-                date: '2026-05-17',
-                content: '1.角色技能全部重构，新增【主控角色搓招】，当【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效，默认使用内置搓招。当前已经配置的搓招：赛琪原地e、止流龙喷。已同步修改的任务：夜航手册、皎皎币、角色突破、角色经验、魔之楔、委托密函、沉浸式戏剧'
-            },
-            {
-                version: 'v1.0.3.21',
-                date: '2026-05-11',
-                content: '1.移除【释放大招后点击下蹲】，新增【主控角色搓招】，当【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效，默认使用内置搓招。目前仅支持【娇娇币】功能<br>2.修复其他问题'
-            },
-            {
-                version: 'v1.0.3.20',
-                date: '2026-04-26',
-                content: '1.钓鱼点新增1.3版本钓点【城郊野外】、【城西区】、【由来巷】，推荐关闭游戏【自动进入联机区域】，以免影响寻路以及识别<br>2.【武器突破】、【云-武器突破】新增【使用魔灵遁逃】功能，当勾选时，在撤离时会自动使用魔灵遁逃撤离'
-            },
-            {
-                version: 'v1.0.3.19',
-                date: '2026-04-17',
-                content: '1.修复新版本收获日关卡选择错误问题<br>2.修复新版本云游戏功能，包括【云-武器突破】、【云-角色突破】、【云-武器经验】'
-            },
-            {
-                version: 'v1.0.3.18',
-                date: '2026-04-13',
-                content: '1.修复沉浸式戏剧'
-            },
-            {
-                version: 'v1.0.3.17',
-                date: '2026-04-11',
-                content: '1.修复60级夜航手册，版本更新后60的副本较多，目前还不支持选择【第六个关卡】、【第七个关卡】功能，关卡新增【60级驱逐】选项，当需要打60级驱逐时关卡选择【60级驱逐】，然后手动进本<br>2.修复迷津，包括红门失效、游戏bug导致的选择buff失效、卡奇遇炮台等<br>3.委托密函副本类型删除【扼守】'
-            },
-            {
-                version: 'v1.0.3.16',
-                date: '2026-04-07',
-                content: '1.游戏1.3版本修复更新<br>(1)修复倍率书界面<br>(2)修复角色复位<br>(3)夜航手册修复，新增支持75级<br>(4)委托密函修复<br>(5)修复游戏闪退重启'
-            },
-            {
-                version: 'v1.0.3.15',
-                date: '2026-03-29',
-                content: '1.优化【狩月人之阶】，新增止流主控，分组赛和巅峰赛战斗逻辑不一样，请根据需要是否勾选分组赛'
-            },
-            {
-                version: 'v1.0.3.14',
-                date: '2026-03-24',
-                content: '1.优化【狩月人之阶】,支持分组赛,去除技能设置修改为选择设置主控角色即可'
-            },
-            {
-                version: 'v1.0.3.13',
-                date: '2026-03-22',
-                content: '1.云游戏新增【云-武器经验】,目前仅支持60级副本,支持副本抓魔灵，当副本内出现魔灵时会自动捕捉<br>2.修复【夜航手册】收获日结束返回主界面异常<br>3.修复【武器突破】结束返回主界面异常'
-            },
-            {
-                version: 'v1.0.3.12',
-                date: '2026-03-13',
-                content: '1.迷津修复止流卡炮台<br>2.迷津优化止流战斗'
-            },
-            {
-                version: 'v1.0.3.11',
-                date: '2026-03-10',
-                content: '1.新增【更新日志】功能，可查看历史更新日志，在【关于脚本】-【更新日志】中查看<br>2.优化【日常任务】-【领取每日历练奖励】<br>3.优化【沉浸式戏剧】识别'
-            },
-            {
-                version: 'v1.0.3.10',
-                date: '2026-03-08',
-                content: '1.新增云游戏-角色突破功能<br>（1）当前云-角色突破只支持10等级图，主控推荐黎涩<br>（2）云-角色突破需要飞枪(满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10)<br>（3）队友尽量不要携带黎涩，因为黎涩开大之后会增加队友移速导致寻路有问题<br>2.修复当执行【整点刷新执行委托密函】时，如果游戏闪退会导致异常的情况<br>3.修复迷津BOSS前购买商店失败问题<br>4.角色经验移除60级副本<br>5.全局配置新增【每日五点十分退游戏】功能，勾选【每日五点十分退游戏】功能后当每日05:10时会触发返回手机桌面触发掉线检测，在任务列表中添加【日常任务】配合【掉线检测】功能实现05:10时重启游戏并重新执行任务从而达到7*24小时挂机<br>6.优化游戏闪退后的游戏重启<br>7.优化沉浸式戏剧结束后成功/失败的识别<br>8.优化其他'
-            },
-            {
-                version: 'v1.0.3.9',
-                date: '2000-01-01',
-                content: '1.新增日常任务模块<br>(1)可自定义选择需要执行的每日任务，当全部勾选后则可以领满每日历练奖励<br>(2)夜航手册默认执行40级第一个关卡3次，配置采用夜航手册菜单设置的配置<br>(3)任务执行顺序：夜航手册-拍照-领取鱼饵-领取玩具气球-领取每日历练奖励，如果不勾选则跳过不执行<br>2.修复夜航手册收获日70级80级选择错误情况'
-            },
-            {
-                version: 'v1.0.3.8',
-                date: '2000-01-01',
-                content: '1.迷津新增止流主控（测试版），推荐2命止流<br>2.优化80娇娇币识图，避免不用角色/主控导致识图失败'
-            }
-        ];
+        var updateLogsCache = null;
 
-        // --- 新增：点击弹出日志窗口 ---
-        $(document).on('click', '#btn_show_logs', function() {
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderLogContent(content) {
+            if ($.isArray(content)) {
+                return $.map(content, function(line) {
+                    return '<p>' + escapeHtml(line) + '</p>';
+                }).join('');
+            }
+            return String(content || '');
+        }
+
+        function buildLogDetail(data) {
+            return '<h4>' + escapeHtml(data.version) + ' (' + escapeHtml(data.date) + ')</h4>' +
+                '<div>' + renderLogContent(data.content) + '</div>';
+        }
+
+        function openUpdateLogLayer(updateLogs) {
+            if (!updateLogs || !updateLogs.length) {
+                layer.msg('暂无更新日志');
+                return;
+            }
+
             // 构建左侧菜单HTML
             var menuHtml = '';
             $.each(updateLogs, function(index, item) {
-                menuHtml += '<div class="log-version-item ' + (index === 0 ? 'active' : '') + '" data-index="' + index + '">' + item.version + '</div>';
+                menuHtml += '<div class="log-version-item ' + (index === 0 ? 'active' : '') + '" data-index="' + index + '">' + escapeHtml(item.version) + '</div>';
             });
 
             // 弹出层
@@ -1650,8 +1661,7 @@
                 content: '<div class="log-container">' +
                         '  <div class="log-left-menu">' + menuHtml + '</div>' +
                         '  <div class="log-right-content" id="log_detail_view">' +
-                        '    <h4>' + updateLogs[0].version + ' (' + updateLogs[0].date + ')</h4>' +
-                        '    <div>' + updateLogs[0].content + '</div>' +
+                        buildLogDetail(updateLogs[0]) +
                         '  </div>' +
                         '</div>',
                 success: function(layero, index) {
@@ -1665,12 +1675,27 @@
                         $(this).addClass('active');
                         
                         // 更新右侧内容
-                        var detailHtml = '<h4>' + data.version + ' (' + data.date + ')</h4>' +
-                                        '<div>' + data.content + '</div>';
-                        layero.find('#log_detail_view').html(detailHtml);
+                        layero.find('#log_detail_view').html(buildLogDetail(data));
                     });
                 }
             });
+        }
+
+        // --- 点击弹出日志窗口 ---
+        $(document).on('click', '#btn_show_logs', function() {
+            if (updateLogsCache) {
+                openUpdateLogLayer(updateLogsCache);
+                return;
+            }
+
+            $.getJSON('updateLogs.json')
+                .done(function(updateLogs) {
+                    updateLogsCache = updateLogs;
+                    openUpdateLogLayer(updateLogsCache);
+                })
+                .fail(function() {
+                    layer.msg('更新日志加载失败');
+                });
         });
 
         // 数据回填逻辑
@@ -1693,7 +1718,8 @@
         'mihan_task_level_role', 'mihan_task_level_weapon',
         'mihan_task_level_mod', 'game_activity_name', 'game_activity_action_crouch', 'game_activity_e_saiqi', 'refresh_time_is_execute_mihan', 
         'mod_activity_shr', 'daily_task_mod', 'daily_task_take_a_picture', 'daily_task_get_fishing_lure', 'daily_task_get_wjqc', 'daily_task_get_daily_award',
-        'global_time_5_offline', 'role_tupo_capture_moling', 'game_activity_get_score', 'fish_map_djyw', 'fish_map_cxq', 'fish_map_ylx', 'wuqi_tupo_moling_run'];
+        'global_time_5_offline', 'role_tupo_capture_moling', 'game_activity_get_score', 'fish_map_djyw', 'fish_map_cxq', 'fish_map_ylx', 'wuqi_tupo_moling_run',
+        'fish_insane'];
     
         $.each(fieldsToCheck, function(index, key) {
             // 如果数据里的值是字符串 "off"，强制改为 false
