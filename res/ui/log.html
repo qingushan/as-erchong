@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>大鲨鱼-二重螺旋</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <style>
+        html, body {
+            background-color: transparent !important;
+            background: rgba(0,0,0,0) !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="footer_bar"
+     style="position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; z-index: 10000;">
+    <!-- 状态文字 -->
+    <span id="footer_text" style="color: red; font-weight: bold; font-size: 11px;">准备就绪...</span>
+    <!-- 运行时间文字 -->
+    <span id="runtime_text" style="color: red; font-weight: bold; font-size: 11px; margin-left: 10px;">运行时间: 00:00:00</span>
+</div>
+<script src="layui/layui.js"></script>
+<script src="js/jquery.min.js"></script>
+
+<script>
+    // 假设这是你的变量
+    var statusText = "当前无可执行任务，请添加任务！！！";
+
+    // 1. 记录脚本开始运行的时间戳
+    var startTime = new Date().getTime();
+
+    // 【方法1】页面加载时直接设置
+    $(function() {
+        $("#footer_text").text(statusText);
+
+        // 2. 启动定时器，每 1000 毫秒（1秒）刷新一次
+        setInterval(function() {
+            updateRuntime();
+        }, 1000);
+    });
+
+    // 【方法2】封装成函数，方便随时调用
+    function updateFooter(msg) {
+        $("#footer_text").text(msg);
+    }
+
+    // 格式化时间的函数
+    function updateRuntime() {
+        var nowTime = new Date().getTime();
+        var diff = nowTime - startTime; // 获取毫秒差
+
+        // 计算 时、分、秒
+        var hours = Math.floor(diff / (3600 * 1000));
+        var leave1 = diff % (3600 * 1000); 
+        var minutes = Math.floor(leave1 / (60 * 1000));
+        var leave2 = leave1 % (60 * 1000);
+        var seconds = Math.floor(leave2 / 1000);
+
+        // 补零操作 (例如 01:05:09)
+        var h = hours < 10 ? "0" + hours : hours;
+        var m = minutes < 10 ? "0" + minutes : minutes;
+        var s = seconds < 10 ? "0" + seconds : seconds;
+
+        // 更新到页面上
+        $("#runtime_text").text("运行时间: " + h + ":" + m + ":" + s);
+    }
+</script>
+
+</body>
+</html>
