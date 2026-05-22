@@ -76,6 +76,8 @@ class AutoGameActivityTask(BaseTask):
             self.level_role = "煜明"
         elif role_index == 1:
             self.level_role = "止流"
+        elif role_index == 2:
+            self.level_role = "苏乙"
         
         print(f"主控角色：{self.level_role}")
 
@@ -289,6 +291,16 @@ class AutoGameActivityTask(BaseTask):
             self.skill_q(after_sleep=4)
             self.skill_e(after_sleep=1.5)
             self.walk_to_w(walk_time=1000)
+        elif self.level_role == "苏乙":
+            self.walk_to_w(walk_time=1000 * 6)
+            self.sleep(1)
+            self.skill_q(after_sleep=4)
+            self.combat_left_click()
+            self.sleep(2)
+            self.combat_left_click()
+            self.sleep(1)
+
+            self.walk_to_w(walk_time=1000 * 2)
 
     def combat(self):
         # 战斗
@@ -298,6 +310,8 @@ class AutoGameActivityTask(BaseTask):
             return self.combat_yuming()
         elif self.level_role == "止流":
             return self.combat_zhiliu()
+        elif self.level_role == "苏乙":
+            return self.combat_suyi()
     
     def combat_yuming(self):
         # 煜明战斗
@@ -386,6 +400,85 @@ class AutoGameActivityTask(BaseTask):
                 if self.level_skill_z_is_ok():
                     self.level_skill_z()
                 
+                self.sleep(0.1)
+
+    def combat_suyi(self):
+        # 苏乙战斗
+        if self.uiconfig['game_activity_get_score'] == 'on':
+            # 分组赛
+            # 每隔5秒释放一次e
+            max_time = 15
+            last_time = self.time()
+
+            skill_last_time = self.time()
+            skill_e_time = 24   # 多少秒开始炸
+            while 1:
+                res = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
+                if res:
+                    print("挑战成功")
+                    self.sleep(1)
+                    self.get_score()
+                    return True
+
+                if self.time() - skill_last_time > skill_e_time:
+                    for i in range(3):
+                        self.skill_q(after_sleep=0.5)
+                    skill_e_time = 9999
+                    self.sleep(2)
+                    self.skill_q(after_sleep=4)
+
+                if self.time() - last_time > max_time:
+                    self.skill_e(after_sleep=0.2)
+                    last_time = self.time()
+                    for i in range(3):
+                        self.combat_left_click()
+                        self.sleep(0.3)
+                else:
+                    self.combat_left_click()
+                    self.sleep(0.5)
+
+                if self.level_skill_z_is_ok():
+                    self.level_skill_z()
+
+                self.sleep(0.1)
+        else:
+            self.lock_enemy()
+
+            # 每隔5秒释放一次e
+            max_time = 15
+            last_time = self.time()
+
+            skill_last_time = self.time()
+            skill_e_time = 999  # 多少秒开始炸
+
+            while 1:
+                res = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
+                if res:
+                    print("挑战成功")
+                    self.sleep(1)
+                    self.get_score()
+                    return True
+
+                if self.time() - skill_last_time > skill_e_time:
+                    for i in range(3):
+                        self.skill_q(after_sleep=0.5)
+                    skill_e_time = 9999
+                    self.sleep(2)
+                    self.skill_q(after_sleep=4)
+
+                if self.time() - last_time > max_time:
+                    self.skill_e(after_sleep=0.2)
+                    last_time = self.time()
+                    for i in range(3):
+                        self.combat_left_click()
+                        self.sleep(0.3)
+                else:
+                    self.combat_left_click()
+                    self.sleep(0.5)
+
+                if self.level_skill_z_is_ok():
+                    self.level_skill_z()
+
                 self.sleep(0.1)
 
     def level_skill_q_is_ok(self):

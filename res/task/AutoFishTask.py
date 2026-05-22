@@ -3,6 +3,7 @@ from ...res.assets.color import *
 
 import numpy as np
 import re
+import random
 
 class AutoFishTask(BaseTask):
     # 钓鱼
@@ -174,12 +175,18 @@ class AutoFishTask(BaseTask):
 
         self.click_until_color(common_color,"左上角红色退出",783,357)
         self.sleep(1)
-        res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
-        if not res:
+        if self.uiconfig["fish_insane"] == 'on':
+            # 疯狂钓鱼
+            self.click_color_to_color(common_color,"左上角红色退出",fish_color,"悠闲甩杆图标",x=1147,y=666)
             self.is_have_easy = True
-            print("悠闲钓鱼！！")
+            print("疯狂钓鱼！！")
         else:
-            print("没有悠闲")
+            res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
+            if not res:
+                self.is_have_easy = True
+                print("悠闲钓鱼！！")
+            else:
+                print("没有悠闲")
         print(f"成功进入{map_name}钓点")
         self.sleep(1)
 
@@ -372,9 +379,12 @@ class AutoFishTask(BaseTask):
                     # 判断是还有鱼，没有则退出
                     if self.is_text_re_in_ocr(rect=[381,34,908,596],pattern="水中暂时无鱼"):
                         print("当前钓点已无鱼，退出")
+                        self.click_until_color(fish_color, "悠闲甩杆图标", 1146, 586)
+                        self.sleep(1)
                         self.level_exit()
                         break
-                    self.click(x=1146,y=586,after_sleep=0.5)
+
+                    self.click(x=1146,y=586,after_sleep=random.uniform(0.4,1.5))
                 else:
                     self.refresh_log()
 

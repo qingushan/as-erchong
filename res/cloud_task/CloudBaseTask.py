@@ -1,6 +1,7 @@
 from ...res.cloud_task.CloudBaseAction import CloudBaseAction
 from ...res.task.BaseFind import BaseFind
 from ...res.task.LogUi import LogUi,MosaicUI
+from ...res.util.CloudRoleSkillUtil import CloudRoleSkillUtil
 from ...res.assets.cloud_color import *
 
 from ascript.android.screen import FindColors
@@ -16,6 +17,7 @@ class CloudBaseTask(CloudBaseAction, BaseFind):
     def __init__(self):
         super().__init__()
         self.logui = LogUi()
+        self.cloud_role_skill_util = CloudRoleSkillUtil()
 
     def await_color(self,color_dict,color_name,out_time=10):
         # 等待某个颜色出现

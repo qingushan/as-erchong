@@ -83,11 +83,11 @@ class CloudBaseAction(BaseGame):
         y = self.cloud_walk_button_center_y
         self.slide(self.cloud_walk_button_center_x, self.cloud_walk_button_center_y, x, y, dur=walk_time, after_sleep=after_sleep)
 
-    def skill_e(self, after_sleep=1):
+    def skill_e(self, dur=20, after_sleep=1):
         # 小技能
         x = self.cloud_action_button_position["小技能"][0]
         y = self.cloud_action_button_position["小技能"][1]
-        self.click(x, y, after_sleep=after_sleep)
+        self.click(x, y, dur=dur, after_sleep=after_sleep)
 
     def skill_q(self, after_sleep=1):
         # 大招
@@ -276,3 +276,22 @@ class CloudBaseAction(BaseGame):
         line2.lineTo(self.action_button_position["闪避"][0] +10,self.action_button_position["闪避"][1]+10)
 
         action.gesture([line1,line2])
+
+
+    # 下面是技能搓招
+    def skill_e_saiqi_1(self):
+        # 赛琪原地e技能
+        x1 = self.cloud_action_button_position["下蹲"][0]
+        y1 = self.cloud_action_button_position["下蹲"][1]
+        line1 = Path(0, 400)
+        line1.moveTo(x1, y1)
+        line1.lineTo(x1 + 1, y1 + 1)
+
+        x2 = self.cloud_action_button_position["小技能"][0]
+        y2 = self.cloud_action_button_position["小技能"][1]
+        line2 = Path(100, 300)
+        line2.moveTo(x2, y2)
+        line2.lineTo(x2 + 1, y2 + 1)
+
+        action.gesture([line1, line2])
+        self.sleep(0.5)

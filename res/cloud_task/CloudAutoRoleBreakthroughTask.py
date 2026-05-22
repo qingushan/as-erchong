@@ -40,6 +40,22 @@ class CloudAutoRoleBreakthroughTask(CloudBaseTask):
         }
         self.init_task()
 
+    def set_skill_config(self):
+        # 初始化云游戏技能配置
+        self.cloud_role_skill_util.init_config(self.uiconfig.get("role_tupo_role_skill", "0"))
+
+    def set_role_skill_config_custom(self):
+        # 构建自定义技能配置传入【云游戏角色技能搓招】
+        skill_config = {
+            "skill_q_max_time": self.level_skill_q_time,
+            "skill_q_max_count": self.level_skill_q_count,
+            "skill_e_max_time": self.level_skill_e_time,
+            "skill_e_max_count": self.level_skill_e_count,
+            "skill_z_max_time": float(self.uiconfig.get("role_tupo_skill_z_time", 30)),
+            "skill_z_max_count": int(self.uiconfig.get("role_tupo_skill_z_count", 1)),
+        }
+        self.cloud_role_skill_util.set_role_skill_config_custom(skill_config)
+
     def init_task(self):
         # 初始化
         self.level_grade = int(self.uiconfig["role_tupo_grade"])
@@ -50,6 +66,9 @@ class CloudAutoRoleBreakthroughTask(CloudBaseTask):
         self.level_skill_e_count = int(self.uiconfig["role_tupo_skill_e_count"])
         self.level_skill_q_time = float(self.uiconfig["role_tupo_skill_q_time"])
         self.level_skill_q_count = int(self.uiconfig["role_tupo_skill_q_count"])
+
+        self.set_skill_config()
+        self.set_role_skill_config_custom()
 
         self.level_more_award = int(self.uiconfig["role_tupo_level_more_award"])
         str_ = self.uiconfig["role_tupo_level_more_award_boci"]
@@ -74,12 +93,14 @@ class CloudAutoRoleBreakthroughTask(CloudBaseTask):
         self.level_skill_e_count = 1
         self.level_skill_q_time = 999999
         self.uiconfig["role_tupo_action_crouch"] = "on"
+        self.set_role_skill_config_custom()
         print("更改完成")
 
     def init_skill_time(self):
         # 重置技能时间
         self.level_skill_e_last_time = 0
         self.level_skill_q_last_time = 0
+        self.cloud_role_skill_util.set_role_skill_config()
 
     def check_use_level_more_award(self):
         # 检查当前轮次是否需要使用委托手册
@@ -422,10 +443,7 @@ class CloudAutoRoleBreakthroughTask(CloudBaseTask):
                     start_time = self.time()
                     now_boci += 1
 
-            if self.level_skill_q_is_ok():
-                self.level_skill_q()
-            if self.level_skill_e_is_ok():
-                self.level_skill_e()
+            self.cloud_role_skill_util.combat()
             self.sleep(0.1)
 
     def refresh_log(self):
