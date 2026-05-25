@@ -23,6 +23,7 @@ from ...res.task.AutoDailyTaskTask import AutoDailyTaskTask
 from ...res.cloud_task.CloudAutoWeaponBreakTask import CloudAutoWeaponBreakTask
 from ...res.cloud_task.CloudAutoRoleBreakthroughTask import CloudAutoRoleBreakthroughTask
 from ...res.cloud_task.CloudAutoWeaponExpTask import CloudAutoWeaponExpTask
+from ...res.cloud_task.CloudAutoGameActivityTask import CloudAutoGameActivityTask
 
 # 测试
 from ...res.task.AutoTestTask import AutoTestTask
@@ -80,6 +81,7 @@ class AppGame:
             "cloud_wuqi_tupo": CloudAutoWeaponBreakTask,
             "cloud_role_tupo": CloudAutoRoleBreakthroughTask,
             "cloud_wuqi_exp": CloudAutoWeaponExpTask,
+            "cloud_game_activity": CloudAutoGameActivityTask
         }
 
         # 初始化悬浮窗位置

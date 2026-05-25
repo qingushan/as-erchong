@@ -295,3 +295,20 @@ class CloudBaseAction(BaseGame):
 
         action.gesture([line1, line2])
         self.sleep(0.5)
+
+    def skill_e_suyi_0(self):
+        # 苏已边走边a
+        x1 = self.cloud_walk_button_center_x
+        y1 = self.cloud_walk_button_center_y
+        line1 = Path(0,500)
+        line1.moveTo(self.cloud_walk_button_center_x + 100,self.cloud_walk_button_center_y)
+        line1.lineTo(x1+1,y1+1)
+
+        x2 = self.cloud_action_button_position["近战攻击"][0]
+        y2 = self.cloud_action_button_position["近战攻击"][1]
+        line2 = Path(200,20)
+        line2.moveTo(x2,y2) 
+        line2.lineTo(x2+1,y2+1)
+        
+        action.gesture([line1,line2])
+        self.sleep(0.5)

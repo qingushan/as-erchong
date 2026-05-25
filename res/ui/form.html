@@ -309,6 +309,7 @@
                                         <option value="cloud_wuqi_tupo">云-武器突破</option>
                                         <option value="cloud_role_tupo">云-角色突破</option>
                                         <option value="cloud_wuqi_exp">云-武器经验</option>
+                                        <option value="cloud_game_activity">云-活动</option>
                                     </select>
                                 </div>
                                 <div class="layui-col-xs5">
@@ -404,7 +405,7 @@
                         <hr>
                         <p>本脚本为免费分享,仅供学习交流使用</p>
                         <hr>
-                        <p>版本信息：v1.0.3.24</p>
+                        <p>版本信息：v1.0.3.27</p>
                         <hr>
                         <div style="margin-top: 20px;">
                             <button type="button" class="layui-btn layui-btn-primary layui-btn-radius" id="btn_show_logs">
@@ -1780,6 +1781,7 @@
                     else if(item.type === "cloud_wuqi_tupo") typeName = "云-武器突破";
                     else if(item.type === "cloud_role_tupo") typeName = "云-角色突破";
                     else if(item.type === "cloud_wuqi_exp") typeName = "云-武器经验";
+                    else if(item.type === "cloud_game_activity") typeName = "云-活动";
                     else typeName = item.type;
                     
                     html += '<tr>';

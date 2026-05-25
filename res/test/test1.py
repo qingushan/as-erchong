@@ -36,6 +36,7 @@ from ...res.assets.cloud_color import *
 from ...res.cloud_task.CloudAutoWeaponBreakTask import CloudAutoWeaponBreakTask
 from ...res.cloud_task.CloudAutoRoleBreakthroughTask import CloudAutoRoleBreakthroughTask
 from ...res.cloud_task.CloudAutoWeaponExpTask import CloudAutoWeaponExpTask
+from ...res.cloud_task.CloudAutoGameActivityTask import CloudAutoGameActivityTask
 from ...res.cloud_task.CloudAutoFindPropWorldTask import CloudAutoFindPropWorldTask
 
 
@@ -134,18 +135,12 @@ def test11(uiconfig):
 
     # 云-武器经验
     # task = CloudAutoWeaponExpTask(uiconfig)
+
+    # 云-活动
+    # task = CloudAutoGameActivityTask(uiconfig)
+    # res = task.find_my_color(cloud_common_color, "角色血条-绿色")
+    # print(res)
     # task.run()
-    # for i in range(4):
-    #     task.rotate_view_to_right(200,dur=200,after_sleep=0.2)
-    # task.rotate_view_to_top(200,dur=200,after_sleep=1)
-    # task.click_fly(after_sleep=3)
-    # task.walk_to_w(1000*0.3,after_sleep=0.2)
-    # task.walk_to_a(1000*2,after_sleep=0.5)
-    # task.walk_to_w(1000*5,after_sleep=0.2)
-    # task.rotate_view_to_down(80,dur=200,after_sleep=0.2)
-    # task.rotate_view_to_left(80,dur=200,after_sleep=0.5)
-    # task.fly_spear(count=3)
-    # task.sleep(2)
 
     # 云-锄大地
     # task = CloudAutoFindPropWorldTask(uiconfig)
