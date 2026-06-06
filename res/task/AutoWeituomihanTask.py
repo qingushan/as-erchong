@@ -315,12 +315,18 @@ class AutoWeituomihanTask(BaseTask):
 
     def go_to_activate_level_quli(self):
         # 驱离激活，判断是否电梯图即可
-        res = self.find_my_color(weituomihan_color,"驱离电梯图")
-        if res:
-            print("驱离-电梯图")
-            self.walk_to_w(1000*10)
-            self.sleep(5)
-        
+        # res = self.find_my_color(weituomihan_color,"驱离电梯图")
+        # if res:
+        #     print("驱离-电梯图")
+        #     self.walk_to_w(1000*10)
+        #     self.sleep(5)
+        # 驱离，强制向前跳三下
+        for i in range(3):
+            self.action_jump_fly(after_time=2)
+        self.sleep(1)
+        self.walk_to_s()
+        self.sleep(1)
+
         return True
 
     def go_to_activate_level_tanxian(self):

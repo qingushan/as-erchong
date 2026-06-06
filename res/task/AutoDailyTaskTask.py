@@ -181,6 +181,34 @@ class AutoDailyTaskTask(BaseTask):
             print("拾取-烟津渡")
             self.click(res[0].x,res[0].y,after_sleep=3)
 
+        # 皓京
+        self.go_home()
+        self.click_color_to_color(common_color, "角色血条-绿色", common_color, "左上角红色退出", x=121, y=114)
+        self.sleep(1)
+        # 皓京
+        self.click(994,662, after_sleep=3)
+        self.click(965,621, after_sleep=3)
+        self.click(961,463, after_sleep=3)
+        self.click(485,433, after_sleep=3)
+        # 蛋皎的印象商店
+        self.click(796,435, after_sleep=3)
+        self.click(340,456, after_sleep=3)
+        self.click(1073,654, after_sleep=10)
+        self.await_color(common_color, "角色血条-绿色", out_time=60 * 3)
+        self.sleep(20)
+
+        res = None
+        for i in range(20):
+            res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["多行"], pattern="[拾取]+")
+            if res:
+                break
+            self.walk_to_w(300)
+            self.sleep(1)
+
+        if res:
+            print("拾取-皓京")
+            self.click(res[0].x, res[0].y, after_sleep=3)
+
         self.go_home()
         print("领取玩具气锤完成")
 

@@ -100,7 +100,7 @@ class AutoWeaponBreakTask(BaseTask):
         for i in range(3):
             self.slide(1193,376,900,376,dur=500)
             self.sleep(2)
-            if self.await_until_click_ocr(rect=[428,544,1260,620],pattern="(调停|武器突破)",time_out=5):
+            if self.await_until_click_ocr(rect=[423,484,1248,613],pattern="(调停|武器突破)",time_out=5):
                 self.sleep(2)
                 break
             

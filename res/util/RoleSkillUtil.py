@@ -127,12 +127,18 @@ class RoleSkillUtil(BaseAction):
 
             self.sleep(3)
 
+            # 按下蹲键
+            self.action_crouch()
+            self.sleep(1)
+
             return True
 
         # 原地e
         if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
             # 释放原地e
-            self.skill_e_saiqi_1()
+            # self.skill_e_saiqi_1()
+
+            self.skill_e()
 
             self.skill_config["skill_e_last_time"] = self.time()
 

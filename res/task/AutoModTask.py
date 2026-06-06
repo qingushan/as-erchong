@@ -366,11 +366,11 @@ class AutoModTask(BaseTask):
         # 驱离激活
         if self.level_grade == 80:
             if self.level_number == "第一个":
-                for i in range(7):
+                for i in range(3):
                     self.action_jump_fly()
                     self.sleep(0.5)
             elif self.level_number == "第二个":
-                for i in range(5):
+                for i in range(3):
                     self.action_jump_fly()
                     self.sleep(0.5)
         else:

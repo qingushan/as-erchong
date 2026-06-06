@@ -220,7 +220,8 @@ class AppGame:
         
         text = f"游戏异常闪退，等待五分钟后重启"
         self.base_task.logui.change_log_text(text)
-        self.base_task.sleep(60*5)
+        # self.base_task.sleep(60*5)
+        self.base_task.sleep(10)
 
         self.open_game()
 
@@ -250,6 +251,9 @@ class AppGame:
                     
                     print("【监控】重连成功，通知主流程继续。")
                     self.ctx.is_game_online = True
+
+            # 检测签到页面
+            self.check_day_signin()
 
             # 检测小月卡
             if self.uiconfig["global_check_month_card"] == "on":
@@ -285,8 +289,16 @@ class AppGame:
         t = datetime.datetime.now()
         if (t.hour == 5) or (t.hour==4 and t.minute == 59):
             if self.base_task.find_my_color(common_color,"小月卡弹窗"):
-                    print("小月卡弹窗")
-                    self.base_task.click(167,627)
+                print("小月卡弹窗")
+                self.base_task.click(167,627)
+
+    def check_day_signin(self):
+        # 每日签到
+        t = datetime.datetime.now()
+        if (t.hour == 5) or (t.hour==4 and t.minute == 59):
+            if self.base_task.find_my_color(common_color,"签到界面"):
+                print("签到界面")
+                self.base_task.click(1126,150)
     
     def timed_offline_detection(self):
         # 定时下线检测

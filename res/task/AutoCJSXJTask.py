@@ -207,6 +207,8 @@ class AutoCJSXJTask(BaseTask):
                 map_type = 1
             elif (390 < res.x < 430) and (390 < res.y < 420):
                 map_type = 2
+            elif (890 < res.x < 920) and (310 < res.y < 340):
+                map_type = 3
         
         print(f"地图类型：{map_type}")
         if map_type == -1:
@@ -221,6 +223,9 @@ class AutoCJSXJTask(BaseTask):
             return res
         elif map_type == 2:
             res = self.go_to_activate_level_C()
+            return res
+        elif map_type == 3:
+            res = self.go_to_activate_level_D()
             return res
 
         return False
@@ -261,6 +266,11 @@ class AutoCJSXJTask(BaseTask):
         self.walk_to_w(1000*5)
         self.rotate_view_direction_to_front(common_color,"任务黄色图标",2)
         self.sleep(1)
+        return self.go_to_activate_level_common()
+
+    def go_to_activate_level_D(self):
+        self.walk_to_d(1000)
+        self.sleep(2)
         return self.go_to_activate_level_common()
 
     def role_restoration(self):
