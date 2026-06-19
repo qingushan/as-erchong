@@ -196,8 +196,8 @@ class AutoLMYYTask(BaseTask):
 
         print(f"当前已参加关卡数量：{self.my_level_count}")
 
-    def check_my_level_is_combat(self):
-        # 检查自己关卡可以打的副本
+    def open_available_joined_level(self):
+        # 检查自己已参加关卡中是否有可打副本，成功时停留在关卡详情页
         status = False
 
         if self.my_level_count == 0:
@@ -229,8 +229,8 @@ class AutoLMYYTask(BaseTask):
 
         return status
 
-    def select_level(self):
-        # 筛选关卡
+    def apply_hall_filter(self):
+        # 应用大厅筛选条件
         print("开始筛选")
         res = self.click_until_ocr(x=113, y=663, rect=[701,544,876,590], pattern="确认")
         self.sleep(1)
@@ -295,6 +295,42 @@ class AutoLMYYTask(BaseTask):
         self.click(781,564)
         self.sleep(1)
 
+    def fast_enter_opened_level(self):
+        # 快速进入当前打开的关卡详情页
+        res = self.await_until_click_ocr(rect=[407, 540, 867, 680], pattern="(参与|演绎)", time_out=5)
+        if res:
+            print("当前关卡可战斗！")
+        else:
+            print("关卡异常，大厅进入副本不可打")
+            return False
+
+        res = self.await_color(common_color, "角色血条-绿色", out_time=10)
+        if not res:
+            print("检查是否还在关卡页面，可能满人了")
+            res = self.is_text_re_in_ocr(rect=[407, 540, 867, 680], pattern="(前往|参与)")
+            if res:
+                print("房间满人，退出")
+                self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
+                self.sleep(1)
+                return False
+
+        res = self.await_color(common_color, "角色血条-绿色", out_time=50)
+        if not res:
+            print("进入副本异常")
+            self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
+            self.sleep(1)
+            return False
+
+        # 重置技能时间
+        self.role_skill_util.set_role_skill_config()
+
+        print("成功进入副本")
+        return True
+
+    def find_and_enter_hall_level_fast(self):
+        # 大厅快速找房，找到房间后立即尝试进入副本
+        self.apply_hall_filter()
+
         while 1:
             self.click(976,655,after_sleep=1)
 
@@ -319,38 +355,11 @@ class AutoLMYYTask(BaseTask):
 
                 print("成功进入关卡")
 
-                # 判断关卡是否可打
-                res = self.await_until_click_ocr(rect=[407, 540, 867, 680], pattern="(参与|演绎)", time_out=5)
-                # res = self.await_until_ocr(rect=[407, 540, 867, 680], pattern="(参与|演绎)", time_out=5)
-                if res:
-                    print("当前关卡可战斗！")
-                else:
-                    print("关卡异常，大厅进入副本不可打")
-                    continue
-
-                res = self.await_color(common_color, "角色血条-绿色", out_time=10)
-                if not res:
-                    print("检查是否还在关卡页面，可能满人了")
-                    res = self.is_text_re_in_ocr(rect=[407, 540, 867, 680], pattern="(前往|参与)")
-                    if res:
-                        print("房间满人，退出")
-                        self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
-                        self.sleep(1)
-                        continue
-
-                res = self.await_color(common_color, "角色血条-绿色", out_time=50)
-                if not res:
-                    print("进入副本异常")
-                    self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
-                    self.sleep(1)
-                    continue
-                
-                # 正常进入
-                print("成功进入副本")
-                return True
+                if self.fast_enter_opened_level():
+                    return True
 
     def from_dt_select_level(self):
-        # 大厅筛选关卡
+        # 切到大厅并快速找房进本
         self.click(48,117)
         self.sleep(3)
 
@@ -358,8 +367,7 @@ class AutoLMYYTask(BaseTask):
         # self.click(604,82)
         # self.sleep(3)
 
-        # 筛选关卡
-        return self.select_level()
+        return self.find_and_enter_hall_level_fast()
 
         # 点击第一个
         # res = self.click_until_ocr(x=self.level_click_pos["第一关"][0], y=self.level_click_pos["第一关"][1], rect=[44, 418, 429, 548], pattern="献度")
@@ -481,7 +489,7 @@ class AutoLMYYTask(BaseTask):
 
         while 1:
             
-            is_my_combat = True   # 当前副本是已参加的副本
+            already_entered_level = False
 
             self.refresh_log()
 
@@ -495,14 +503,14 @@ class AutoLMYYTask(BaseTask):
             # 检查当前参加的关卡
             self.check_my_level_count()
             if self.my_level_count > 0:
-                res = self.check_my_level_is_combat()
+                res = self.open_available_joined_level()
                 if not res:
                     # 在已参加的战斗中没有找到可以战斗的
                     if self.my_level_count < 5:
                         # 前往大厅筛选
                         res = self.from_dt_select_level()
                         if res:
-                            is_my_combat = False
+                            already_entered_level = True
                     else:
                         # 满了，等待
                         self.sleep(10)
@@ -513,10 +521,10 @@ class AutoLMYYTask(BaseTask):
                 if not res:
                     continue
 
-                is_my_combat = False
+                already_entered_level = True
 
-            # 是否需要进入副本，已参加的才需要进入，大厅的上面已成功进入
-            if is_my_combat:
+            # 大厅抢房成功时已经进入副本；已参加关卡只打开详情页，需要在这里统一入本
+            if not already_entered_level:
                 res = self.go_in_level()
                 if not res:
                     continue
