@@ -373,6 +373,25 @@ class AutoModTask(BaseTask):
                 for i in range(3):
                     self.action_jump_fly()
                     self.sleep(0.5)
+            else:
+                self.action_jump_fly()
+                self.sleep(1)
+        elif self.level_grade == 75:
+            if self.level_number == "第二个":
+                for i in range(6):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+            elif self.level_number == "第三个":
+                for i in range(5):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+            elif self.level_number == "倒数第三个":
+                for i in range(2):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+            else:
+                self.action_jump_fly()
+                self.sleep(1)
         else:
             res = self.find_my_color(mod_color,"驱离电梯图")
             if res:
@@ -826,12 +845,20 @@ class AutoModTask(BaseTask):
 
         if self.uiconfig["mod_activity_shr"] == "on":
             # 收获日退出
-            res = self.find_my_color(mod_color,"选择关卡界面确认选择")
-            if res:
-                self.click(44,32)
-                self.sleep(3)
-                self.click(44,32)
-                self.sleep(3)
+            # res = self.find_my_color(mod_color,"选择关卡界面确认选择")
+            # if res:
+                # self.click(44,32)
+                # self.sleep(3)
+                # self.click(44,32)
+                # self.sleep(3)
+            for i in range(10):
+                res = self.find_my_color(common_color, "左上角红色退出")
+                if res:
+                    self.click(44, 32)
+                    self.sleep(3)
+                else:
+                    break
+
         else:
             res = self.find_my_color(mod_color,"选择关卡界面确认选择")
             if res:
@@ -998,6 +1025,8 @@ class AutoModTask(BaseTask):
                 self.level_type = '驱离'
             elif self.level_number == "倒数第四个":
                 self.level_type = '驱离'
+            elif self.level_number == "倒数第五个":
+                self.level_type = '扼守'
             else:
                 self.level_type = '驱离'
         elif self.level_grade == 80:

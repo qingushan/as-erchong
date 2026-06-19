@@ -66,6 +66,9 @@ class AutoFishTask(BaseTask):
 
         if self.uiconfig['fish_map_ylx'] == 'on':
             self.maps.append("由来巷")
+
+        if self.uiconfig['fish_map_bhcz'] == 'on':
+            self.maps.append("百花车站")
         
         print(f"初始化完成，当前执行钓点：{self.maps}")
 
@@ -84,19 +87,12 @@ class AutoFishTask(BaseTask):
                     print(f"当前鱼饵数量：{self.fish_bait}")
                     break
 
-    def go_home(self):
-        # 回家
-        self.click_color_to_color(common_color,"主界面左上角菜单",common_color,"左上角红色退出",x=123,y=92)
-        self.sleep(2)
-        self.click_color_to_color(common_color,"左上角红色退出",fish_color,"回家-确定",x=52,y=611)
-        self.sleep(1)
-        self.click_color_to_color(fish_color,"回家-确定",common_color,"角色血条-绿色",x=770,y=413)
-        self.sleep(2)
-        print("成功返回家")
-
     def go_to_level(self,map_name):
         # 前往副本
         print(f"开始前往钓鱼地点---{map_name}")
+        
+        self.go_home()
+
         self.click_color_to_color(common_color,"角色血条-绿色",common_color,"主界面菜单展示",x=38,y=30)
         self.sleep(1)
         self.click_color_to_color(common_color,"主界面菜单展示",common_color,"左上角红色退出",x=211,y=324)
@@ -110,12 +106,12 @@ class AutoFishTask(BaseTask):
 
         if map_name == "冰湖城":
             self.click(49,187,after_sleep=2)
-            self.click(214,124,after_sleep=2)
+            self.click(380,124,after_sleep=2)
         elif map_name == "净界岛":
             self.click(46,114)
         elif map_name == "下水道":
             self.click(49,187,after_sleep=2)
-            self.click(376,124,after_sleep=2)
+            self.click(533,123,after_sleep=2)
         elif map_name == "浮星埠":
             self.click(49,259,after_sleep=2)
             self.click(214,126,after_sleep=2)
@@ -140,6 +136,9 @@ class AutoFishTask(BaseTask):
         elif map_name == "由来巷":
             self.click(48,324,after_sleep=2)
             self.click(537,122,after_sleep=2)
+        elif map_name == "百花车站":
+            self.click(49,187,after_sleep=2)
+            self.click(217,123,after_sleep=2)
         
         self.sleep(1)
         self.click_color_to_color(fish_color,"追踪当前钓鱼点",common_color,"地图传送",x=997,y=657)
@@ -156,6 +155,9 @@ class AutoFishTask(BaseTask):
             self.walk_to_a(1000*4)
             self.sleep(0.5)
             self.walk_to_w(1000)
+            self.sleep(0.5)
+        elif map_name == "百花车站":
+            self.walk_to_a(1000 * 2)
             self.sleep(0.5)
 
         for i in range(20):

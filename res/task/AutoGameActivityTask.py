@@ -134,7 +134,7 @@ class AutoGameActivityTask(BaseTask):
                 self.slide(98,533,106,113,dur=500)
                 self.sleep(2)
         if not res:
-            print("没有找到--{self.game_activity_name}，退出")
+            print(f"没有找到--{self.game_activity_name}，退出")
             self.click_color_to_color(common_color,"左上角红色退出",common_color,"主界面菜单展示",x=40,y=32)
             self.sleep(1)
             for i in range(3):

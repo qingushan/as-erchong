@@ -10,6 +10,7 @@ from android.net import Uri
 from android.provider import Settings
 from ascript.android import system
 from ascript.android.screen import FindColors
+from ascript.android.action import Ime
 
 
 from ...res.assets.color import *
@@ -30,6 +31,8 @@ from ...res.task.AutoWeaponExpTask import AutoWeaponExpTask
 from ...res.task.AutoGameActivityTask import AutoGameActivityTask
 from ...res.task.AutoTestTask import AutoTestTask
 from ...res.task.AutoDailyTaskTask import AutoDailyTaskTask
+from ...res.task.AutoZEWeaponTask import AutoZEWeaponTask
+from ...res.task.AutoLMYYTask import AutoLMYYTask
 
 # 云游戏
 from ...res.assets.cloud_color import *
@@ -116,13 +119,26 @@ def test11(uiconfig):
 
     # 测试类
     # task = AutoTestTask(uiconfig)
-    # task.skill_e(after_sleep=0.5)
-    # task.skill_e_yuming_0()
-    # task.run()
-    # task.skill_e_test()
+
+    # 灾厄武器
+    # task = AutoZEWeaponTask(uiconfig)
+    # task.combat()
+
+    # 联袂演绎
+    # task = AutoLMYYTask(uiconfig)
+    # task.combat()
 
     # 日常任务
     # task = AutoDailyTaskTask(uiconfig)
+    #
+    # print(Ime.is_active())
+    #
+    # task.click(713, 558)
+    # task.sleep(2)
+    # Ime.input_clear()
+    # Ime.input("羽蛇之永恒")
+    # task.sleep(1)
+    # Ime.keys([66])
 
     # 云-武器突破
     # task = CloudAutoWeaponBreakTask(uiconfig)
@@ -148,3 +164,4 @@ def test11(uiconfig):
 
     app_game = AppGame(uiconfig)
     app_game.run()
+

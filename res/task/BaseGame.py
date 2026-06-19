@@ -2,6 +2,8 @@ from ascript.android.screen import FORMAT_IMAGE_DATA
 from ...res.config import *
 import time
 
+from ascript.android.action import Ime
+
 from ascript.android.screen import Colors
 
 import datetime

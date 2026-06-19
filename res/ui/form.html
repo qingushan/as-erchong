@@ -258,6 +258,8 @@
             <li>钓鱼</li>
             <li>沉浸式戏剧</li>
             <li>活动</li>
+            <li>灾厄武器</li>
+            <li>联袂演绎</li>
         </ul>
 
         <!-- 菜单对应的内容 -->
@@ -271,6 +273,8 @@
                     <div class="layui-card-body">
                         <div>
                             <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 提示：as软件如有更新，推荐更新到最新版
+                                <br>
                                 <i class="layui-icon layui-icon-tips"></i> 提示：所有任务在主界面启动即可
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 提示：在启动脚本前请确保游戏内布局设置是【方案一】
@@ -308,6 +312,8 @@
                                         <option value="fish">钓鱼</option>
                                         <option value="cjsxj">沉浸式戏剧</option>
                                         <option value="game_activity">活动</option>
+                                        <option value="ze_weapon">灾厄武器</option>
+                                        <option value="lmyy">联袂演绎</option>
                                         <option value="cloud_wuqi_tupo">云-武器突破</option>
                                         <option value="cloud_role_tupo">云-角色突破</option>
                                         <option value="cloud_wuqi_exp">云-武器经验</option>
@@ -407,7 +413,7 @@
                         <hr>
                         <p>本脚本为免费分享,仅供学习交流使用</p>
                         <hr>
-                        <p>版本信息：v1.0.3.30</p>
+                        <p>版本信息：v1.0.3.42</p>
                         <hr>
                         <div style="margin-top: 20px;">
                             <button type="button" class="layui-btn layui-btn-primary layui-btn-radius" id="btn_show_logs">
@@ -466,7 +472,7 @@
                     <div class="layui-card-body">
                         <div>
                             <div style="color: #666; font-size: 12px;">
-                                <i class="layui-icon layui-icon-tips"></i> 80迷津推荐配置：6命夫人+满熔炼防御刀+满熔炼花弓。buff推荐不点怪物受到伤害降低、最大生命提高、攻击提高，其他都可点满
+                                <i class="layui-icon layui-icon-tips"></i> 80迷津推荐配置：2命止流及以上+专武+回血魔灵。buff推荐不点怪物受到伤害降低、最大生命提高、攻击提高，其他都可点满
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 远程武器选择只会影响boss战斗的方式
                                 <br>
@@ -559,7 +565,7 @@
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 收获日可能会有个别无法点到的关卡，比如第五个关卡，如果需执行这些关卡可在脚本执行到选关的时候手动选择关卡即可
                                 <br>
-                                <i class="layui-icon layui-icon-tips"></i> 1.3版本更新后60的副本较多，目前还不支持选择【第六个关卡】、【第七个关卡】功能，关卡新增【60级驱逐】选项，当需要打60级驱逐时关卡选择【60级驱逐】，然后手动进本
+                                <i class="layui-icon layui-icon-tips"></i> 1.3版本更新后60的副本较多，目前还不支持选择【第六个关卡】、【第七个关卡】功能，关卡新增【60级驱逐】选项，当需要打60级驱逐时关卡选择【60级驱逐】，然后手动进本。重要！！！打60级驱逐才选【60级驱逐】，打60驱离不要选这个！！！
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效，默认使用内置搓招
                             </div>
@@ -1034,7 +1040,6 @@
                 </div>
             </div>
 
-
             <!-- 页面 魔之楔 -->
             <div class="layui-tab-item">
                 <div class="layui-card">
@@ -1125,7 +1130,6 @@
                 </div>
             </div>
 
-
             <!-- 页面 武器突破 -->
             <div class="layui-tab-item">
                 <div class="layui-card">
@@ -1133,8 +1137,6 @@
                     <div class="layui-card-body">
                         <div>
                             <div style="color: #666; font-size: 12px;">
-                                <i class="layui-icon layui-icon-tips"></i> 队友禁止携带黎涩避免影响寻路
-                                <br>
                                 <i class="layui-icon layui-icon-tips"></i> 本地游戏要求
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 运行该功能前推荐前往设置吧人群密度调到最低，减少游戏卡顿的情况，提高成功率，不使用功能后记得修改回来！！！
@@ -1294,7 +1296,6 @@
                 </div>
             </div>
 
-
             <!-- 页面 委托密函 -->
             <div class="layui-tab-item">
                 <div class="layui-card">
@@ -1428,6 +1429,7 @@
                                 <input type="checkbox" name="fish_map_djyw" title="东郊野外">
                                 <input type="checkbox" name="fish_map_cxq" title="城西区">
                                 <input type="checkbox" name="fish_map_ylx" title="由来巷">
+                                <input type="checkbox" name="fish_map_bhcz" title="百花车站">
                             </div>
                         </div>
                         <div class="layui-form-item">
@@ -1439,7 +1441,6 @@
                     </div>
                 </div>
             </div>
-
 
             <!-- 页面 沉浸式戏剧 -->
             <div class="layui-tab-item">
@@ -1511,7 +1512,6 @@
                 </div>
             </div>
 
-
             <!-- 页面 活动 -->
             <div class="layui-tab-item">
                 <div class="layui-card">
@@ -1571,6 +1571,158 @@
                                     <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
                                     <input type="number" name="game_activity_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 灾厄本 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 支持单人、多人（双人、三人）。多人模式下必须先手动组队好再启动脚本，多人模式-队员 先启动脚本，然后 多人模式-房主 再启动
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当选择 多人模式-队员 时，默认使用阵容一，确保阵容一是正确的
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 背包最少要有两个深境罗盘！！！不然会影响识别
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 默认选择最低等级的深境罗盘
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 打到多少级是由房主的设置决定，其余人的设置不生效
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 多人模式下，房主必须携带巧手，由房主去开锁
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 只有 多人模式-房主、单人模式 会识别副本等级
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 双人推荐：1.苏乙（主控）+扶苏  2.猪妹（主控）+苏乙  目前满配可挂机过195级
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 三人推荐：1.苏乙 + 扶苏 + 猪妹
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i>当勾选【半自动】时，可在游戏内找好点位再启动，会根据主控角色设置进行搓招和自动下一轮，当单人模式时模式必须选择【单人模式】，多人时选【多人模式-房主】或【多人模式-队员】都可
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="ze_weapon_semi_automatic" title="半自动" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">模式</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_level">
+                                    <option value="0" selected>多人模式-房主</option>
+                                    <option value="1">多人模式-队员</option>
+                                    <option value="2">单人模式</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_role">
+                                    <option value="3-2" selected>苏乙</option>
+                                    <option value="4-2">扶疏</option>
+                                    <option value="5-2">猪妹</option>
+                                    <option value="2-1">止流</option>
+                                    <option value="7-1">煜明</option>
+                                    <option value="6-2">菲娜(测试)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本属性</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_property">
+                                    <option value="水" selected>水</option>
+                                    <option value="火">火</option>
+                                    <option value="风">风</option>
+                                    <option value="雷">雷</option>
+                                    <option value="光">光</option>
+                                    <option value="暗">暗</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="ze_weapon_max_num" value="3" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">打到多少级</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="ze_weapon_max_grade" value="180" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 联袂演绎 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 推荐主控猪妹+扶苏+任意C,猪妹技能效益拉到最高，尽量降低蓝耗，魔灵推荐回血魔灵
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 全自动蹭房+房间冷却好后自动打，自动领取奖励
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 可自定义副本筛选条件，下面勾选哪个在筛选时就会勾选哪个，如果都不想筛选的话直接默认全空着就好了，如果筛选了箱子，等级想全选，等级那里也直接空着就好
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当大厅没有可打的副本时，会一直刷新直到副本出现（蹲点）
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【追踪BOSS方式】即战斗时追踪boss的方式分为螺旋飞跃和飞枪，飞枪要求 满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10，其他飞枪自行测试。推荐使用飞枪
+                                <br>
+                            </div>
+                        </div>
+                        <br>
+                        <p> ========================== 筛选条件 ========================== </p>
+                         <div class="layui-card-body">
+                            <div class="layui-form-item">
+                                <p> ===奖励筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_mod_f" title="风箱子" value="on">
+                                <input type="checkbox" name="lmyy_select_mod_h" title="火箱子" value="on"> 
+                                <input type="checkbox" name="lmyy_select_mod_l" title="雷箱子" value="on"> 
+                                <input type="checkbox" name="lmyy_select_mod_s" title="水箱子" value="on">
+                                <input type="checkbox" name="lmyy_select_mod_g" title="光箱子" value="on">
+                                <input type="checkbox" name="lmyy_select_mod_a" title="暗箱子" value="on">
+                            </div>
+                            <div class="layui-form-item">
+                                <p> ===等级筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_grade_50" title="50" value="on">
+                                <input type="checkbox" name="lmyy_select_grade_70" title="70" value="on"> 
+                                <input type="checkbox" name="lmyy_select_grade_90" title="90" value="on"> 
+                                <input type="checkbox" name="lmyy_select_grade_110" title="110" value="on">
+                            </div>
+                            <div class="layui-form-item">
+                                <p> ===倍率筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_scale_100" title="100%" value="on">
+                                <input type="checkbox" name="lmyy_select_scale_200" title="200%" value="on"> 
+                                <input type="checkbox" name="lmyy_select_scale_800" title="800%" value="on"> 
+                                <input type="checkbox" name="lmyy_select_scale_2000" title="2000%" value="on">
+                            </div>
+                        </div>
+                        <p> ========================== 筛选条件 ========================== </p>
+                        <br>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色</label>
+                            <div class="layui-input-block">
+                                <select name="lmyy_role">
+                                    <option value="5-3" selected>猪妹</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">追踪BOSS方式</label>
+                            <div class="layui-input-block">
+                                <select name="lmyy_trace_boss">
+                                    <option value="0" selected>螺旋飞跃</option>
+                                    <option value="1">飞枪</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -1723,8 +1875,10 @@
         'mihan_task_level_mod', 'game_activity_name', 'game_activity_action_crouch', 'game_activity_e_saiqi', 'refresh_time_is_execute_mihan', 
         'mod_activity_shr', 'daily_task_mod', 'daily_task_take_a_picture', 'daily_task_get_fishing_lure', 'daily_task_get_wjqc', 'daily_task_get_daily_award',
         'global_time_5_offline', 'role_tupo_capture_moling', 'game_activity_get_score', 'fish_map_djyw', 'fish_map_cxq', 'fish_map_ylx', 'wuqi_tupo_moling_run',
-        'fish_insane'];
-    
+        'fish_insane', 'fish_map_bhcz', 'ze_weapon_semi_automatic', 'lmyy_select_mod_f', 'lmyy_select_mod_h', 'lmyy_select_mod_l', 'lmyy_select_mod_s',
+        'lmyy_select_mod_g', 'lmyy_select_mod_a', 'lmyy_select_grade_50', 'lmyy_select_grade_70', 'lmyy_select_grade_90', 'lmyy_select_grade_110','lmyy_select_scale_100',
+        'lmyy_select_scale_200', 'lmyy_select_scale_800', 'lmyy_select_scale_2000'];
+
         $.each(fieldsToCheck, function(index, key) {
             // 如果数据里的值是字符串 "off"，强制改为 false
             if (data[key] === "off") {
@@ -1780,6 +1934,8 @@
                     else if(item.type === "fish") typeName = "钓鱼";
                     else if(item.type === "cjsxj") typeName = "沉浸式戏剧";
                     else if(item.type === "game_activity") typeName = "活动";
+                    else if(item.type === "ze_weapon") typeName = "灾厄武器";
+                    else if(item.type === "lmyy") typeName = "联袂演绎";
                     else if(item.type === "cloud_wuqi_tupo") typeName = "云-武器突破";
                     else if(item.type === "cloud_role_tupo") typeName = "云-角色突破";
                     else if(item.type === "cloud_wuqi_exp") typeName = "云-武器经验";

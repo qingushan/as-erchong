@@ -18,6 +18,8 @@ from ...res.task.AutoWeaponBreakTask import AutoWeaponBreakTask
 from ...res.task.AutoWeaponExpTask import AutoWeaponExpTask
 from ...res.task.AutoGameActivityTask import AutoGameActivityTask
 from ...res.task.AutoDailyTaskTask import AutoDailyTaskTask
+from ...res.task.AutoZEWeaponTask import AutoZEWeaponTask
+from ...res.task.AutoLMYYTask import AutoLMYYTask
 
 # 云游戏
 from ...res.cloud_task.CloudAutoWeaponBreakTask import CloudAutoWeaponBreakTask
@@ -77,6 +79,8 @@ class AppGame:
             "mihan": AutoWeituomihanTask,
             "fish": AutoFishTask,
             "cjsxj": AutoCJSXJTask,
+            "ze_weapon": AutoZEWeaponTask,
+            "lmyy": AutoLMYYTask,
             "game_activity": AutoGameActivityTask,
             "cloud_wuqi_tupo": CloudAutoWeaponBreakTask,
             "cloud_role_tupo": CloudAutoRoleBreakthroughTask,
@@ -294,11 +298,15 @@ class AppGame:
 
     def check_day_signin(self):
         # 每日签到
-        t = datetime.datetime.now()
-        if (t.hour == 5) or (t.hour==4 and t.minute == 59):
-            if self.base_task.find_my_color(common_color,"签到界面"):
-                print("签到界面")
-                self.base_task.click(1126,150)
+        # t = datetime.datetime.now()
+        # if (t.hour == 5) or (t.hour==4 and t.minute == 59):
+        #     if self.base_task.find_my_color(common_color,"签到界面"):
+        #         print("签到界面")
+        #         self.base_task.click(1126,150)
+
+        if self.base_task.find_my_color(common_color, "签到界面"):
+            print("签到界面")
+            self.base_task.click(1126, 150)
     
     def timed_offline_detection(self):
         # 定时下线检测
