@@ -126,7 +126,7 @@ def test11(uiconfig):
 
     # 联袂演绎
     # task = AutoLMYYTask(uiconfig)
-    # task.combat()
+    # task.action_dodge_to_w()
 
     # 日常任务
     # task = AutoDailyTaskTask(uiconfig)

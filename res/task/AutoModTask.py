@@ -71,9 +71,22 @@ class AutoModTask(BaseTask):
             list_ = str_.split(",")
             for i in list_:
                 self.level_more_award_boci.append(int(i))
-        
+
+        # # 添加魔灵技能
+        # self.add_moling_skill()
+
         print(f"当前委托手册:{self.level_more_award}")
         print(f"使用委托手册的轮次:{self.level_more_award_boci}")
+
+    def add_moling_skill(self):
+        """
+        添加魔灵技能
+        """
+        skill_config = {
+            "skill_z_max_time": float(self.uiconfig.get('mod_skill_z_time', 30)),
+            "skill_z_max_count": int(self.uiconfig.get('mod_skill_z_count', 1))
+        }
+        self.role_skill_util.add_skill_z(skill_config)
 
     def rotate_view_to_middle_by_color(self, color_dict, color_name):
         # 根据颜色旋转视角至中间
@@ -327,6 +340,9 @@ class AutoModTask(BaseTask):
 
         # 重置技能时间
         self.role_skill_util.set_role_skill_config()
+
+        # 添加魔灵技能
+        self.add_moling_skill()
 
         print("成功进入副本")
 

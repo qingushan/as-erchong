@@ -34,7 +34,7 @@ class AutoCJSXJTask(BaseTask):
 
         self.role = "赛琪"
 
-        self.boss = "其他"      # 当前boss
+        self.boss = None      # 当前boss
         self.boss_dodge_to_w_time = 5   # boss战向boss冲刺时间
         self.boss_dodge_to_w_last_time = 0  # 最后一次释放技能时间
 
@@ -85,19 +85,25 @@ class AutoCJSXJTask(BaseTask):
         self.role_skill_util.set_role_skill_config_custom(skill_config)
         self.isfail = False
 
-        # 主控角色
-        # if self.role == "赛琪":
-        #     self.level_skill_q_time = 9999999
-        #     self.level_skill_q_count = 1
-            # self.level_skill_e_count = 1
-
     def init_skill_time(self):
         # 重置技能时间
         self.level_skill_e_last_time = 0
         self.level_skill_q_last_time = 0
         self.level_skill_z_last_time = 0
-        self.role_skill_util.set_role_skill_config()
         self.boss_dodge_to_w_last_time = 0
+
+        self.role_skill_util.set_role_skill_config()
+        self.role_skill_util.set_combat_options(None)
+
+    def add_moling_skill(self):
+        """
+        添加魔灵技能
+        """
+        skill_config = {
+            "skill_z_max_time": float(self.uiconfig.get('cjsxj_skill_z_time', 30)),
+            "skill_z_max_count": int(self.uiconfig.get('cjsxj_skill_z_count', 1))
+        }
+        self.role_skill_util.add_skill_z(skill_config)
 
     def go_to_level(self):
         # 前往副本
@@ -121,8 +127,12 @@ class AutoCJSXJTask(BaseTask):
 
     def go_in_level(self):
         # 进入副本
-        self.boss = "其他"
+        self.boss = None
+
         self.init_skill_time()
+
+        # 添加魔灵技能
+        self.add_moling_skill()
 
         print(f"开始进入副本---")
         res = self.find_my_color(cjsxj_color,"挑战完成-下一层")
@@ -160,7 +170,7 @@ class AutoCJSXJTask(BaseTask):
 
     def unlocking(self):
         # 开锁
-        for i in range(5):
+        for i in range(10):
             res = self.find_my_color(common_color,'角色血条-绿色')
             if res:
                 self.click(796,360)
@@ -226,6 +236,11 @@ class AutoCJSXJTask(BaseTask):
             return res
         elif map_type == 3:
             res = self.go_to_activate_level_D()
+            if res:
+                self.walk_to_a(walk_time=1000)
+                self.sleep(0.5)
+                # self.action_jump_fly()
+                self.action_jump_fly()
             return res
 
         return False
@@ -321,6 +336,11 @@ class AutoCJSXJTask(BaseTask):
 
         self.click_color_to_color(cjsxj_color,"沉浸式戏剧-右上角深渊票",common_color,"角色血条-绿色",x=43,y=34)
         self.sleep(2)
+
+        res = self.find_my_color(common_color, "角色血条-绿色")
+        if not res:
+            self.click_color_to_color(cjsxj_color, "历练-迷津前往", common_color, "角色血条-绿色", x=43, y=34)
+            self.sleep(2)
 
         res = self.find_my_color(common_color,"角色血条-绿色")
         if res:
@@ -466,8 +486,35 @@ class AutoCJSXJTask(BaseTask):
 
         return boss_name
 
+    def is_boss(self):
+        # 判断当前是否BOSS
+        res = self.is_text_re_in_ocr(rect=[10,216,226,318],pattern="(最终|高危)")
+        if res:
+            return True
+        else:
+            return False
+
     def combat_custom(self):
         # 自定义战斗
+
+        if self.uiconfig.get('cjsxj_role_skill', '0') == "8-1":
+            if self.is_boss():
+                # 识别boss
+                if (self.boss == "其他") or(self.boss is None):
+                    self.boss = self.ocr_boss()
+
+            # 传入当前当前boss
+            combat_options = {
+                "CJSXJ_BOSS": self.boss
+            }
+            self.role_skill_util.set_combat_options(combat_options)
+
+            # 释放技能
+            self.role_skill_util.combat()
+
+
+            return True
+
         if self.is_boss():
             # self.auot_lock_enemy()
             self.lock_enemy()
@@ -501,6 +548,12 @@ class AutoCJSXJTask(BaseTask):
                     for i in range(3):
                         self.lock_enemy()
                         self.sleep(0.1)
+
+        # 传入当前当前boss
+        combat_options = {
+            "CJSXJ_BOSS":self.boss
+        }
+        self.role_skill_util.set_combat_options(combat_options)
 
         # 释放技能
         self.role_skill_util.combat()

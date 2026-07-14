@@ -316,6 +316,7 @@ class BaseAction(BaseGame):
         line2.lineTo(self.action_button_position["闪避"][0] +10,self.action_button_position["闪避"][1]+10)
 
         action.gesture([line1,line2])
+        self.sleep(0.5)
 
     def action_dodge_to_s(self):
         # 向后闪避

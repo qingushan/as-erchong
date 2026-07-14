@@ -68,6 +68,16 @@ class AutoMozhixieTask(BaseTask):
         print(f"当前委托手册:{self.level_more_award}")
         print(f"使用委托手册的轮次:{self.level_more_award_boci}")
 
+    def add_moling_skill(self):
+        """
+        添加魔灵技能
+        """
+        skill_config = {
+            "skill_z_max_time": float(self.uiconfig.get('mozhixie_skill_z_time', 30)),
+            "skill_z_max_count": int(self.uiconfig.get('mozhixie_skill_z_count', 1))
+        }
+        self.role_skill_util.add_skill_z(skill_config)
+
     def check_use_level_more_award(self):
         # 检查当前轮次是否需要使用委托手册
         if self.now_level_boci in self.level_more_award_boci:
@@ -149,6 +159,9 @@ class AutoMozhixieTask(BaseTask):
 
         # 重置技能时间
         self.role_skill_util.set_role_skill_config()
+
+        # 添加魔灵技能
+        self.add_moling_skill()
 
         print("成功进入副本")
 

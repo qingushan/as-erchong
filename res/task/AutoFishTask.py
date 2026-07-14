@@ -157,7 +157,7 @@ class AutoFishTask(BaseTask):
             self.walk_to_w(1000)
             self.sleep(0.5)
         elif map_name == "百花车站":
-            self.walk_to_a(1000 * 2)
+            self.walk_to_d(1000*2)
             self.sleep(0.5)
 
         for i in range(20):

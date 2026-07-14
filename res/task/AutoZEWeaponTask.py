@@ -298,6 +298,8 @@ class AutoZEWeaponTask(BaseTask):
             if self.uiconfig["ze_weapon_role"] == "5-2":
                 # 猪妹
                 self.walk_to_w(walk_time=1000*2)
+                self.sleep(0.5)
+                self.rotate_view_to_right(slide_distance=100, after_sleep=0.5)
             elif self.uiconfig["ze_weapon_role"] == "7-1":
                 # 煜明
                 self.walk_to_w(walk_time=500)

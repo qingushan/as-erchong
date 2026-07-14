@@ -19,6 +19,8 @@ class AutoLMYYTask(BaseTask):
 
         self.box_count = 0      # 获取奖励箱子数量
 
+        self.now_boss = ""      # 当前boss
+
         # 筛选打什么
         self.select_config = {
             "奖励":[],
@@ -151,7 +153,7 @@ class AutoLMYYTask(BaseTask):
 
     def get_box_count(self):
         # 获取当前箱子数量
-        res = self.ocr(rect=[459,391,880,436])
+        res = self.ocr(rect=[405,391,941,438])
         if res:
             for r in res:
                 text = r.text
@@ -169,7 +171,7 @@ class AutoLMYYTask(BaseTask):
         self.sleep(3)
 
         # 判断是否可以领取奖励
-        res = self.is_text_re_in_ocr(rect=[1025,628,1275,694],pattern="全部")
+        res = self.is_text_re_in_ocr(rect=[1025,628,1275,694],pattern="[全部领取]+")
         if res:
             print("有奖励可以领取")
             self.click(1155,654)
@@ -234,6 +236,10 @@ class AutoLMYYTask(BaseTask):
         print("开始筛选")
         res = self.click_until_ocr(x=113, y=663, rect=[701,544,876,590], pattern="确认")
         self.sleep(1)
+
+        # 向上滑动
+        self.slide(958,324,949,486,dur=500)
+        self.sleep(2)
 
         # 清除
         self.click(497,564,after_sleep=1)
@@ -310,14 +316,14 @@ class AutoLMYYTask(BaseTask):
             res = self.is_text_re_in_ocr(rect=[407, 540, 867, 680], pattern="(前往|参与)")
             if res:
                 print("房间满人，退出")
-                self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
+                self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="[筛选舞台]+")
                 self.sleep(1)
                 return False
 
         res = self.await_color(common_color, "角色血条-绿色", out_time=50)
         if not res:
             print("进入副本异常")
-            self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="筛选")
+            self.click_until_ocr(x=48, y=32, rect=[84,632,237,696], pattern="[筛选舞台]+")
             self.sleep(1)
             return False
 
@@ -332,7 +338,7 @@ class AutoLMYYTask(BaseTask):
         self.apply_hall_filter()
 
         while 1:
-            self.click(976,655,after_sleep=1)
+            self.click(976,655,after_sleep=0.5)
 
             res = None
             for i in range(3):
@@ -343,8 +349,9 @@ class AutoLMYYTask(BaseTask):
 
             if res:
                 # 刷新
-                print("无房间，刷新")
-                self.click(976,655,after_sleep=1)
+                # print("无房间，刷新")
+                # self.click(976,655,after_sleep=1)
+                pass
             else:
                 # 有房间
                 # 点击第一个
@@ -357,6 +364,11 @@ class AutoLMYYTask(BaseTask):
 
                 if self.fast_enter_opened_level():
                     return True
+                else:
+                    # 检查是否成功返回主界面
+                    if self.is_text_re_in_ocr(rect=[44, 418, 429, 548], pattern="献度"):
+                        self.click_until_ocr(x=48, y=32, rect=[84, 632, 237, 696], pattern="筛选")
+                        self.sleep(1)
 
     def from_dt_select_level(self):
         # 切到大厅并快速找房进本
@@ -414,6 +426,8 @@ class AutoLMYYTask(BaseTask):
         # 重置技能时间
         self.role_skill_util.set_role_skill_config()
 
+        self.now_boss = ""  # 重置boss
+
         print("成功进入副本")
         return True
 
@@ -453,6 +467,77 @@ class AutoLMYYTask(BaseTask):
         else:
             print("返回主界面失败")
 
+    def get_boss(self):
+        """
+        识别当前BOSS
+        """
+        res = self.ocr(rect=[545,10,749,49])
+        if res:
+            for r in res:
+                text = r.text
+                result = re.findall("雪国", text)
+                if len(result) > 0:
+                    if self.now_boss != "雪国的野兽":
+                        self.now_boss = "雪国的野兽"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("炼火", text)
+                if len(result) > 0:
+                    if self.now_boss != "炼火的典狱长":
+                        self.now_boss = "炼火的典狱长"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("历战者", text)
+                if len(result) > 0:
+                    if self.now_boss != "历战者":
+                        self.now_boss = "历战者"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("审判官", text)
+                if len(result) > 0:
+                    if self.now_boss != "蒙恩的审判官":
+                        self.now_boss = "蒙恩的审判官"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("哈洛吉", text)
+                if len(result) > 0:
+                    if self.now_boss != "欺惑者哈洛吉":
+                        self.now_boss = "欺惑者哈洛吉"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("西比尔", text)
+                if len(result) > 0:
+                    if self.now_boss != "西比尔":
+                        self.now_boss = "西比尔"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("巨噬者", text)
+                if len(result) > 0:
+                    if self.now_boss != "巨噬者":
+                        self.now_boss = "巨噬者"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("苦修士", text)
+                if len(result) > 0:
+                    if self.now_boss != "蒙恩的苦修士":
+                        self.now_boss = "蒙恩的苦修士"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
+                result = re.findall("生者", text)
+                if len(result) > 0:
+                    if self.now_boss != "蜕生者":
+                        self.now_boss = "蜕生者"
+                        print(f"BOSS切换，当前BOSS：{self.now_boss}")
+                    return True
+
     def combat(self):
         # 战斗
         print("开始战斗")
@@ -472,6 +557,9 @@ class AutoLMYYTask(BaseTask):
             if self.time() - start_time > max_time:
                 return False
 
+            # 识别BOSS
+            self.get_boss()
+
             # 释放技能
             self.role_skill_util.combat()
 
@@ -485,6 +573,13 @@ class AutoLMYYTask(BaseTask):
     def run(self):
         self.init_task()
         self.refresh_log()
+
+        if self.uiconfig["lmyy_semi_automatic"] == "on":
+            # 半自动
+            self.go_in_level()
+            self.combat()
+            return True
+
         self.go_to_level()
 
         while 1:

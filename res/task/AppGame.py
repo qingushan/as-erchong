@@ -298,11 +298,15 @@ class AppGame:
 
     def check_day_signin(self):
         # 每日签到
-        # t = datetime.datetime.now()
-        # if (t.hour == 5) or (t.hour==4 and t.minute == 59):
-        #     if self.base_task.find_my_color(common_color,"签到界面"):
-        #         print("签到界面")
-        #         self.base_task.click(1126,150)
+        t = datetime.datetime.now()
+        if (t.hour == 5) or (t.hour==4 and t.minute == 59):
+            # if self.base_task.find_my_color(common_color,"签到界面"):
+            #     print("签到界面")
+            #     self.base_task.click(1126,150)
+
+            if self.base_task.is_text_re_in_ocr(rect=[561,70,727,139],pattern="获得物品"):
+                print("签到界面，领取奖励")
+                self.base_task.click(640,686,after_sleep=3)
 
         if self.base_task.find_my_color(common_color, "签到界面"):
             print("签到界面")

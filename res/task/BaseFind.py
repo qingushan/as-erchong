@@ -80,7 +80,7 @@ class BaseFind(BaseGame):
             if res:
                 return res
 
-            time.sleep(0.5)
+            time.sleep(0.1)
 
     def huagong_find_enemy(self):
         # 花弓范围内是否有敌人

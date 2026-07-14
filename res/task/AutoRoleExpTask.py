@@ -36,6 +36,16 @@ class AutoRoleExpTask(BaseTask):
         # 初始化技能配置
         self.role_skill_util.init_config(self.uiconfig.get('role_exp_role_skill', '0'))
 
+    def add_moling_skill(self):
+        """
+        添加魔灵技能
+        """
+        skill_config = {
+            "skill_z_max_time": float(self.uiconfig.get('role_tupo_skill_z_time', 30)),
+            "skill_z_max_count": int(self.uiconfig.get('role_tupo_skill_z_count', 1))
+        }
+        self.role_skill_util.add_skill_z(skill_config)
+
     def rotate_view_to_middle_by_color(self, color_dict, color_name):
         # 根据颜色旋转视角至中间
         start_time = self.time()  # 开始时间，超时则退出
@@ -159,6 +169,9 @@ class AutoRoleExpTask(BaseTask):
 
         # 重置技能时间
         self.role_skill_util.set_role_skill_config()
+
+        # 添加魔灵技能
+        self.add_moling_skill()
 
         print("成功进入副本")
 

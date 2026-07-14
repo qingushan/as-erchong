@@ -78,6 +78,8 @@ class AutoGameActivityTask(BaseTask):
             self.level_role = "止流"
         elif role_index == 2:
             self.level_role = "苏乙"
+        elif role_index == 3:
+            self.level_role = "芙洛拉"
         
         print(f"主控角色：{self.level_role}")
 
@@ -117,22 +119,22 @@ class AutoGameActivityTask(BaseTask):
     def go_to_level(self):
         # 前往副本
         print(f"开始前往---{self.game_activity_name}")
-        self.click_color_to_color(common_color,"角色血条-绿色",common_color,"主界面菜单展示",x=38,y=30)
+        self.click_color_to_color(common_color, "角色血条-绿色", common_color, "主界面菜单展示", x=38, y=30)
         self.sleep(1)
-        self.click_color_to_color(common_color,"主界面菜单展示",common_color,"左上角红色退出",x=339,y=239)
+        self.click_color_to_color(common_color, "主界面菜单展示", common_color, "左上角红色退出", x=339, y=239)
         self.sleep(2)
         res = None
         for i in range(3):
             for i in range(5):
-                res = self.is_text_re_in_ocr(rect=[3,75,281,641],pattern="(狩月|之阶)")
+                res = self.is_text_re_in_ocr(rect=[5, 77, 267, 638], pattern="(狩月|之阶)")
                 if res:
                     break
                 self.sleep(0.5)
             if res:
                 break
             else:
-                self.slide(98,533,106,113,dur=500)
-                self.sleep(2)
+                self.slide(98, 533, 106, 113, dur=500)
+                self.sleep(4)
         if not res:
             print(f"没有找到--{self.game_activity_name}，退出")
             self.click_color_to_color(common_color,"左上角红色退出",common_color,"主界面菜单展示",x=40,y=32)
@@ -151,7 +153,8 @@ class AutoGameActivityTask(BaseTask):
         x = res[0].x
         y = res[0].y
             
-        self.click_color_to_color(common_color,"左上角红色退出",game_activity_color,"狩月人之阶_前往",x=x,y=y)
+        # self.click_color_to_color(common_color,"左上角红色退出",game_activity_color,"狩月人之阶_前往",x=x,y=y)
+        self.click_until_ocr(x=x, y=y, rect=[936,76,1265,185], pattern="(狩月|之阶)")
         self.sleep(1)
 
         # 分组赛凹分
@@ -301,6 +304,18 @@ class AutoGameActivityTask(BaseTask):
             self.sleep(1)
 
             self.walk_to_w(walk_time=1000 * 2)
+        elif self.level_role == "芙洛拉":
+            for i in range(2):
+                self.action_jump_fly()
+                self.sleep(0.5)
+
+            self.skill_q(after_sleep=4)
+
+            for i in range(2):
+                self.action_jump_fly()
+                self.sleep(0.5)
+
+            self.skill_e()
 
     def combat(self):
         # 战斗
@@ -312,6 +327,8 @@ class AutoGameActivityTask(BaseTask):
             return self.combat_zhiliu()
         elif self.level_role == "苏乙":
             return self.combat_suyi()
+        elif self.level_role == "芙洛拉":
+            return self.combat_fll()
     
     def combat_yuming(self):
         # 煜明战斗
@@ -483,6 +500,36 @@ class AutoGameActivityTask(BaseTask):
                     self.level_skill_z()
 
                 self.sleep(0.1)
+
+    def combat_fll(self):
+        # 芙洛拉战斗
+        if self.uiconfig['game_activity_get_score'] == 'on':
+            # 分组赛
+            # 每隔10秒释放一次重击
+            max_time = 5
+            last_time = self.time()
+
+            skill_last_time = self.time()
+
+            skill_e_time = 24   # 多少秒开始炸
+            while 1:
+                res = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
+                if res:
+                    print("挑战成功")
+                    self.sleep(1)
+                    self.get_score()
+                    return True
+
+                if self.time() - last_time > max_time:
+                    self.combat_left_click(dur=500)
+                    last_time = self.time()
+
+                if self.level_skill_z_is_ok():
+                    self.level_skill_z()
+
+                self.sleep(0.1)
+        else:
+            pass
 
     def level_skill_q_is_ok(self):
         # 大招是否可以释放

@@ -117,6 +117,16 @@ class AutoWeituomihanTask(BaseTask):
         print(f"当前任务时间点：{self.task_time}")
         print(f"当前支持执行的任务类型：{self.level_types}")
 
+    def add_moling_skill(self):
+        """
+        添加魔灵技能
+        """
+        skill_config = {
+            "skill_z_max_time": float(self.uiconfig.get('mihan_skill_z_time', 30)),
+            "skill_z_max_count": int(self.uiconfig.get('mihan_skill_z_count', 1))
+        }
+        self.role_skill_util.add_skill_z(skill_config)
+
     def init_task_level(self):
         # 委托密函每个类型初始化
         self.level_finish_count = 0 # 探索完成次数，不论成功失败
@@ -254,6 +264,9 @@ class AutoWeituomihanTask(BaseTask):
 
         # 重置技能时间
         self.role_skill_util.set_role_skill_config()
+
+        # 添加魔灵技能
+        self.add_moling_skill()
 
         print("成功进入副本")
         return True

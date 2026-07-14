@@ -14,6 +14,7 @@ class RoleSkillUtil(BaseAction):
         self.skill_config_custom = {}   # 自定义技能配置，通过外部设置
         self.skill_config = {}  #角色技能配置
         self.options = {}  # 角色技能额外参数
+        self.combat_options = {}    # 战斗时额外参数
 
         self.base_find = BaseFind()
         
@@ -44,11 +45,20 @@ class RoleSkillUtil(BaseAction):
             self.role = "菲娜"
         elif self.skill_type == "7-1":
             self.role = "煜明"
+        elif self.skill_type == "7-3":
+            self.role = "煜明"
+        elif self.skill_type == "8-1":
+            self.role = "芙洛拉"
+        elif self.skill_type == "8-3":
+            self.role = "芙洛拉"
 
         self.set_role_skill_config()
         
         print(f"当前角色：{self.role}")
         print(f"技能模组{self.skill_type}")
+
+    def set_combat_options(self, option):
+        self.combat_options = copy.deepcopy(option)
 
     def set_role_skill_config_custom(self,skill_config):
         # 自定义技能配置,只设置一次
@@ -117,7 +127,7 @@ class RoleSkillUtil(BaseAction):
             self.skill_config = {
                 "skill_q_max_time": 10,
                 "skill_q_last_time": 0,
-                "skill_e_max_time": 9,
+                "skill_e_max_time": 7,
                 "skill_e_max_count": 3,
                 "skill_e_last_time": 0,
                 "skill_z_max_time": 10,
@@ -129,8 +139,8 @@ class RoleSkillUtil(BaseAction):
             self.skill_config = {
                 "skill_q_max_time": -1,
                 "skill_q_last_time": 0,
-                "skill_e_max_time": 1,
-                "skill_e_max_count": 2,
+                "skill_e_max_time": 0.2,
+                "skill_e_max_count": 1,
                 "skill_e_last_time": 0,
                 "skill_z_max_time": 10,
                 "skill_z_last_time": 0,
@@ -177,6 +187,68 @@ class RoleSkillUtil(BaseAction):
                 "skill_z_last_time": 0,
                 "skill_z_max_count": 1
             }
+        elif self.skill_type == "7-3":
+            # 煜明-联袂演绎
+            self.skill_config = {
+                "skill_q_max_time": 99999,
+                "skill_q_last_time": 0,
+                "skill_e_max_time": 0,
+                "skill_e_max_count": 1,
+                "skill_e_last_time": 0,
+                "skill_z_max_time": 10,
+                "skill_z_last_time": 0,
+                "skill_z_max_count": 1,
+                "click_lock_boss_max_time": 3,  # 锁boss间隔
+                "click_lock_boss_last_time": 0,
+                "dodge_max_time": 5,  # 向前闪避
+                "dodge_last_time": 0,
+                "lmyy_trace_boss": self.options.get("lmyy_trace_boss", "0")  # 追踪boss方式
+            }
+        elif self.skill_type == "8-1":
+            # 芙洛拉
+            self.skill_config = {
+                "skill_q_max_time": 99999,
+                "skill_q_last_time": 0,
+                "skill_e_max_time": 4,
+                "skill_e_max_count": 1,
+                "skill_e_last_time": 0,
+                 "dodge_to_w_max_time": 3,   # 闪避
+                "dodge_to_w_last_time": 0,
+                "skill_click_max_time": 5,  # 重击
+                "skill_click_max_count": 1,
+                "skill_click_last_time": 0,
+                "click_lock_boss_max_time": 1,  # 锁boss间隔
+                "click_lock_boss_last_time": 0,
+            }
+        elif self.skill_type == "8-3":
+            # 芙洛拉-联袂演绎
+            self.skill_config = {
+                "skill_q_max_time": 99999,
+                "skill_q_last_time": self.time() - 99994,   # 5秒后开大
+                "skill_e_max_time": 3,
+                "skill_e_max_count": 1,
+                "skill_e_last_time": 0,
+                "skill_z_max_time": 10,
+                "skill_z_last_time": 0,
+                "skill_z_max_count": 1,
+                "dodge_to_w_max_time": 3,   # 闪避
+                "dodge_to_w_last_time": 0,
+                "skill_click_max_time": 5,  # 重击
+                "skill_click_max_count": 1,
+                "skill_click_last_time": self.time(),
+                "click_lock_boss_max_time": 1,  # 锁boss间隔
+                "click_lock_boss_last_time": 0,
+            }
+
+    def add_skill_z(self,skill_config):
+        """
+        添加魔灵技能
+        """
+        self.skill_config["skill_z_max_time"] = float(skill_config["skill_z_max_time"])
+        self.skill_config["skill_z_last_time"] = 0
+        self.skill_config["skill_z_max_count"] = int(skill_config["skill_z_max_count"])
+        print("成功添加魔灵技能")
+        print(self.skill_config)
 
     def combat(self):
         # 战斗
@@ -199,6 +271,12 @@ class RoleSkillUtil(BaseAction):
             self.combat_skill_6_2()
         elif self.skill_type == "7-1":
             self.combat_skill_7_1()
+        elif self.skill_type == "7-3":
+            self.combat_skill_7_3()
+        elif self.skill_type == "8-1":
+            self.combat_skill_8_1()
+        elif self.skill_type == "8-3":
+            self.combat_skill_8_3()
 
     def combat_custom(self):
         # 自定义战斗
@@ -252,8 +330,6 @@ class RoleSkillUtil(BaseAction):
             self.action_crouch()
             self.sleep(1)
 
-            return True
-
         # 原地e
         if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
             # 释放原地e
@@ -263,7 +339,14 @@ class RoleSkillUtil(BaseAction):
 
             self.skill_config["skill_e_last_time"] = self.time()
 
-            return True
+        # 魔灵
+        if self.skill_config["skill_z_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
+                # 释放魔灵
+                for i in range(self.skill_config["skill_z_max_count"]):
+                    self.skill_z(after_sleep=0.1)
+
+                self.skill_config["skill_z_last_time"] = self.time()
 
     def combat_skill_2_1(self):
         # 止流龙喷
@@ -275,8 +358,6 @@ class RoleSkillUtil(BaseAction):
             self.skill_e(after_sleep=1)
 
             self.skill_config["skill_e_last_time"] = self.time()
-
-            return True
 
         # 大招
         if self.time() - self.skill_config["skill_q_last_time"] >= self.skill_config["skill_q_max_time"]:
@@ -291,8 +372,6 @@ class RoleSkillUtil(BaseAction):
 
             # self.sleep(3)
 
-            return True
-
         # 魔灵
         if self.skill_config["skill_z_max_time"] >= 0:
             if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
@@ -301,8 +380,6 @@ class RoleSkillUtil(BaseAction):
                     self.skill_z(after_sleep=0.1)
 
                 self.skill_config["skill_z_last_time"] = self.time()
-
-                return True
 
     def combat_skill_3_2(self):
         # 苏乙-灾厄
@@ -372,36 +449,8 @@ class RoleSkillUtil(BaseAction):
         if self.skill_config["skill_q_max_time"] >= 0:
             if self.time() - self.skill_config["skill_q_last_time"] >= self.skill_config["skill_q_max_time"]:
                 # 释放大招
-                self.skill_q()
-                self.sleep(3)
-
+                self.skill_q(after_sleep=4)
                 self.skill_config["skill_q_last_time"] = self.time()
-                return True
-
-        # 技能
-        if self.skill_config["skill_e_max_time"] >= 0:
-            if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
-                # 释放技能
-                for i in range(self.skill_config["skill_e_max_count"]):
-                    self.skill_z(after_sleep=0.1)
-
-                self.skill_config["skill_e_last_time"] = self.time()
-
-                return True
-
-        # 魔灵
-        if self.skill_config["skill_z_max_time"] >= 0:
-            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
-                # 释放魔灵
-                for i in range(self.skill_config["skill_z_max_count"]):
-                    self.skill_z()
-
-                self.skill_config["skill_z_last_time"] = self.time()
-
-                return True
-
-    def combat_skill_5_2(self):
-        # 猪妹-灾厄
 
         # 技能
         if self.skill_config["skill_e_max_time"] >= 0:
@@ -412,8 +461,6 @@ class RoleSkillUtil(BaseAction):
 
                 self.skill_config["skill_e_last_time"] = self.time()
 
-                return True
-
         # 魔灵
         if self.skill_config["skill_z_max_time"] >= 0:
             if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
@@ -423,7 +470,26 @@ class RoleSkillUtil(BaseAction):
 
                 self.skill_config["skill_z_last_time"] = self.time()
 
-                return True
+    def combat_skill_5_2(self):
+        # 猪妹-灾厄
+
+        # 技能
+        if self.skill_config["skill_e_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
+                # 释放技能
+                for i in range(self.skill_config["skill_e_max_count"]):
+                    self.skill_e(after_sleep=0.1)
+
+                self.skill_config["skill_e_last_time"] = self.time()
+
+        # 魔灵
+        if self.skill_config["skill_z_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
+                # 释放魔灵
+                for i in range(self.skill_config["skill_z_max_count"]):
+                    self.skill_z(after_sleep=0.1)
+
+                self.skill_config["skill_z_last_time"] = self.time()
 
     def combat_skill_5_3(self):
         # 猪妹-联袂演绎
@@ -476,7 +542,6 @@ class RoleSkillUtil(BaseAction):
                     self.skill_q(after_sleep=2)
 
                 self.skill_config["skill_q_last_time"] = self.time()
-                return True
 
         # 技能
         if self.skill_config["skill_e_max_time"] >= 0:
@@ -487,8 +552,6 @@ class RoleSkillUtil(BaseAction):
 
                 self.skill_config["skill_e_last_time"] = self.time()
 
-                return True
-
         # 魔灵
         if self.skill_config["skill_z_max_time"] >= 0:
             if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
@@ -497,8 +560,6 @@ class RoleSkillUtil(BaseAction):
                     self.skill_z(after_sleep=0.1)
 
                 self.skill_config["skill_z_last_time"] = self.time()
-
-                return True
 
         # 蓄力 + 闪避
         self.combat_left_click(dur=500)
@@ -515,7 +576,6 @@ class RoleSkillUtil(BaseAction):
                 # 释放大招
                 self.skill_q(after_sleep=3)
                 self.skill_config["skill_q_last_time"] = self.time()
-                return True
 
         # 技能
         if self.skill_config["skill_e_max_time"] >= 0:
@@ -524,8 +584,6 @@ class RoleSkillUtil(BaseAction):
                 self.skill_e(after_sleep=0.3)
                 self.combat_left_click()
                 self.skill_config["skill_e_last_time"] = self.time()
-
-                return True
 
         # 魔灵
         if self.skill_config["skill_z_max_time"] >= 0:
@@ -536,4 +594,143 @@ class RoleSkillUtil(BaseAction):
 
                 self.skill_config["skill_z_last_time"] = self.time()
 
-                return True
+    def combat_skill_7_3(self):
+        # 煜明-联袂演绎
+
+        # 锁boss
+        if self.skill_config["click_lock_boss_max_time"] >= 0:
+            if self.time() - self.skill_config["click_lock_boss_last_time"] >= self.skill_config[
+                "click_lock_boss_max_time"]:
+                # 锁boss
+                self.lock_enemy()
+                self.skill_config["click_lock_boss_last_time"] = self.time()
+
+        # 向前闪避
+        # if self.skill_config["dodge_max_time"] >= 0:
+        #     if self.time() - self.skill_config["dodge_last_time"] >= self.skill_config["dodge_max_time"]:
+        #         # 向前闪避
+        #         if self.skill_config["lmyy_trace_boss"] == "0":
+        #             self.sleep(0.3)
+        #             self.action_jump_fly(after_time=0.5)
+        #         elif self.skill_config["lmyy_trace_boss"] == "1":
+        #             # self.sleep(0.1)
+        #             self.fly_spear()
+        #
+        #         self.skill_config["dodge_last_time"] = self.time()
+
+                # 大招
+        if self.skill_config["skill_q_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_q_last_time"] >= self.skill_config["skill_q_max_time"]:
+                # 释放大招
+                self.skill_q(after_sleep=3)
+                self.skill_config["skill_q_last_time"] = self.time()
+
+        # 技能
+        if self.skill_config["skill_e_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
+                # 释放技能
+                self.skill_e(after_sleep=0.3)
+                self.combat_left_click()
+                self.skill_config["skill_e_last_time"] = self.time()
+
+        # 魔灵
+        if self.skill_config["skill_z_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
+                # 释放魔灵
+                for i in range(self.skill_config["skill_z_max_count"]):
+                    self.skill_z(after_sleep=0.1)
+
+                self.skill_config["skill_z_last_time"] = self.time()
+
+    def combat_skill_8_1(self):
+        # 芙洛拉
+
+        # 锁boss
+        if self.combat_options:
+            if self.combat_options.get("CJSXJ_BOSS", None) is not None:
+                if self.skill_config["click_lock_boss_max_time"] >= 0:
+                    if self.time() - self.skill_config["click_lock_boss_last_time"] >= self.skill_config["click_lock_boss_max_time"]:
+                        # 锁boss
+                        self.lock_enemy()
+                        self.skill_config["click_lock_boss_last_time"] = self.time()
+
+        # 大招
+        if self.time() - self.skill_config["skill_q_last_time"] >= self.skill_config["skill_q_max_time"]:
+            # 释放大招
+            self.skill_q(after_sleep=3)
+            self.skill_config["skill_q_last_time"] = self.time()
+
+        # 技能
+        if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
+            # self.skill_e(after_sleep=0.5)
+            if self.combat_options:
+                if self.combat_options.get("CJSXJ_BOSS",None) is None:
+                    self.walk_to_s(500)
+                    self.skill_config["skill_e_last_time"] = self.time()
+
+        # 重击
+        if self.time() - self.skill_config["skill_click_last_time"] >= self.skill_config["skill_click_max_time"]:
+            self.combat_left_click(dur=500)
+            self.skill_config["skill_click_last_time"] = self.time()
+
+        # 闪避
+        if self.combat_options:
+            if self.combat_options.get("CJSXJ_BOSS", None) is not None:
+                if self.time() - self.skill_config["dodge_to_w_last_time"] >= self.skill_config["dodge_to_w_max_time"]:
+                    self.action_dodge_to_w()
+                    self.skill_config["dodge_to_w_last_time"] = self.time()
+
+        # 魔灵
+        if self.skill_config["skill_z_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
+                # 释放魔灵
+                for i in range(self.skill_config["skill_z_max_count"]):
+                    self.skill_z(after_sleep=0.1)
+
+                self.skill_config["skill_z_last_time"] = self.time()
+
+        self.combat_left_click()
+
+    def combat_skill_8_3(self):
+        # 芙洛拉-联袂演绎
+
+        # 锁boss
+        if self.skill_config["click_lock_boss_max_time"] >= 0:
+            if self.time() - self.skill_config["click_lock_boss_last_time"] >= self.skill_config["click_lock_boss_max_time"]:
+                # 锁boss
+                self.lock_enemy()
+                self.skill_config["click_lock_boss_last_time"] = self.time()
+
+        # 大招
+        if self.time() - self.skill_config["skill_q_last_time"] >= self.skill_config["skill_q_max_time"]:
+            # 释放大招
+            for i in range(3):
+                self.skill_q(after_sleep=0.5)
+            self.sleep(1.5)
+            self.skill_config["skill_q_last_time"] = self.time()
+
+        # 技能
+        if self.time() - self.skill_config["skill_e_last_time"] >= self.skill_config["skill_e_max_time"]:
+            self.skill_e(after_sleep=0.5)
+            self.skill_config["skill_e_last_time"] = self.time()
+
+        # 重击
+        if self.time() - self.skill_config["skill_click_last_time"] >= self.skill_config["skill_click_max_time"]:
+            self.combat_left_click(dur=500)
+            self.skill_config["skill_click_last_time"] = self.time()
+
+        # 闪避
+        if self.time() - self.skill_config["dodge_to_w_last_time"] >= self.skill_config["dodge_to_w_max_time"]:
+            self.action_dodge_to_w()
+            self.skill_config["dodge_to_w_last_time"] = self.time()
+
+        # 魔灵
+        if self.skill_config["skill_z_max_time"] >= 0:
+            if self.time() - self.skill_config["skill_z_last_time"] >= self.skill_config["skill_z_max_time"]:
+                # 释放魔灵
+                for i in range(self.skill_config["skill_z_max_count"]):
+                    self.skill_z(after_sleep=0.1)
+
+                self.skill_config["skill_z_last_time"] = self.time()
+
+        self.combat_left_click()

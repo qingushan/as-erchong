@@ -144,7 +144,7 @@ class AutoDailyTaskTask(BaseTask):
                 break
             self.walk_to_w(300)
             self.sleep(1)
-        
+
         if res:
             print("拾取-冰湖城")
             self.click(res[0].x,res[0].y,after_sleep=3)
@@ -155,7 +155,8 @@ class AutoDailyTaskTask(BaseTask):
         self.sleep(1)
         # 烟津渡
         self.click(994,664,after_sleep=3)
-        self.click(988,555,after_sleep=3)
+        self.click(993,183,after_sleep=3)
+        self.click(982,326,after_sleep=3)
         self.click(978,391,after_sleep=3)
         self.click(626,700,after_sleep=3)
         # 蛋皎的印象商店
@@ -176,7 +177,7 @@ class AutoDailyTaskTask(BaseTask):
                 break
             self.walk_to_w(300)
             self.sleep(1)
-        
+
         if res:
             print("拾取-烟津渡")
             self.click(res[0].x,res[0].y,after_sleep=3)
@@ -187,8 +188,9 @@ class AutoDailyTaskTask(BaseTask):
         self.sleep(1)
         # 皓京
         self.click(994,662, after_sleep=3)
-        self.click(965,621, after_sleep=3)
-        self.click(961,463, after_sleep=3)
+        self.click(993, 183, after_sleep=3)
+        self.click(966,399, after_sleep=3)
+        self.click(963,463, after_sleep=3)
         self.click(485,433, after_sleep=3)
         # 蛋皎的印象商店
         self.click(796,435, after_sleep=3)
