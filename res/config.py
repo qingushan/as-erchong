@@ -1,4 +1,24 @@
+import os as _os
+
+
 VERSION = "1.0.4.10"
+
+# Remote runtimes are extracted outside the original AScript project. Resolve
+# resources from this package instead of R.ui/R.res so downloaded HTML, fonts,
+# images, and other assets are used together with the downloaded Python code.
+PROJECT_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+
+
+def resource_path(*child_paths):
+    return _os.path.join(PROJECT_ROOT, "res", *child_paths)
+
+
+def ui_resource(*child_paths):
+    return resource_path("ui", *child_paths)
+
+
+def image_resource(*child_paths):
+    return resource_path("img", *child_paths)
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720

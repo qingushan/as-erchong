@@ -1,12 +1,12 @@
 from ascript.android.screen import FindColors
 from ascript.android.screen import Colors
 from ascript.android.screen import Ocr
-from ascript.android.system import R
 from ascript.android.screen import OcrX
 
 
 from ...res.task.BaseGame import BaseGame
 from ...res.assets.color import mijin_color, common_color
+from ...res.config import resource_path
 
 import time
 import re
@@ -28,7 +28,7 @@ class BaseFind(BaseGame):
 
     def ocrx(self,rect=None,region=0.9):
         # 点阵识别
-        res = OcrX.find_all(R.res("font.t"),rect=rect,region=region)
+        res = OcrX.find_all(resource_path("font.t"),rect=rect,region=region)
         return res
 
     def ocrx_in_text(self,pattern,rect=None,region=0.9):
@@ -137,5 +137,4 @@ class BaseFind(BaseGame):
             return False
         else:
             return True
-
 

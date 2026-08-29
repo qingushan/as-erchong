@@ -1,7 +1,6 @@
-from ascript.android.system import R
 from ascript.android.ui import WebWindow
 
-from ...res.config import VERSION
+from ...res.config import VERSION, ui_resource
 
 
 import time
@@ -28,7 +27,7 @@ class LogUi:
             self._is_initialized = True
 
     def init_show(self):
-        self.logui = WebWindow(R.ui("log.html"))
+        self.logui = WebWindow(ui_resource("log.html"))
         self.logui.size(1280,30)
         self.logui.mode(2)
         self.logui.gravity(80|1)
@@ -62,7 +61,7 @@ class MosaicUI:
             self._is_initialized = True
 
     def init_show(self):
-        self.logui = WebWindow(R.ui("mosaic.html"))
+        self.logui = WebWindow(ui_resource("mosaic.html"))
         self.logui.size(110,20)
         self.logui.mode(2)
         self.logui.gravity(80|3)

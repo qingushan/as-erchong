@@ -1,5 +1,5 @@
-from ascript.android.system import R
 from ascript.android.ui import WebWindow
+from ..config import ui_resource
 import json
 
 def tunnel(k,v):
@@ -11,6 +11,6 @@ def tunnel(k,v):
         # resobj = json.loads(v)
         # print(resobj)
 
-formw =  WebWindow(R.ui("form.html"),tunnel)
+formw =  WebWindow(ui_resource("form.html"),tunnel)
 formw.height("70vh")
 formw.show()

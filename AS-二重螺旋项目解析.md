@@ -2,7 +2,7 @@
 
 > 本文档用于跨会话快速了解本项目。**后续代码有更新时，请同步更新本文档**（尤其是「任务清单」「架构」「更新记录」三节）。
 >
-> 最后同步时间：2026-08-26（版本号由维护者发布时手动调整）
+> 最后同步时间：2026-08-29（版本号由维护者发布时手动调整）
 
 ## 一、项目概述
 
@@ -16,8 +16,13 @@
 
 ```
 erchong/
-├── __init__.py            # 入口：弹出配置窗体 form.html，submit 后调 test1.test11(uiconfig)
+├── __init__.py            # 稳定入口：只调用 remote_loader.start()
+├── remote_loader.py       # GitHub 远程运行时检查、下载、校验、缓存及回退
+├── runtime_entry.py       # 业务入口：配置窗体 + submit 后调 test1.test11(uiconfig)
 ├── build.as               # AS 打包配置：工程名 + pip 依赖(opencv 4.1.2.30/requests/numpy 等)
+├── tools/
+│   └── build_runtime_release.py # 生成内容寻址运行时 ZIP 与 dist/latest.json
+├── dist/                  # GitHub runtime 分支使用的远程发布清单及发布包
 └── res/
     ├── config.py          # 全局配置：VERSION、屏幕尺寸、本地/云游戏按键坐标、技能CD
     ├── font.t             # 点阵字库（OcrX 用）
@@ -60,11 +65,14 @@ erchong/
 
 ## 三、启动与数据流
 
-1. `__init__.py`（工程入口）→ `WebWindow(R.ui("form.html"), tunnel)` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。
-2. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
-3. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)`。
-4. `test11` 末尾 `AppGame(uiconfig).run()` 进入正式调度（前面是注释掉的单任务调试代码）。
-5. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
+1. `__init__.py`（稳定入口）只调用 `remote_loader.start()`，不直接导入业务任务，确保用户首次导入的启动器可以长期保留。
+2. 加载器从 GitHub `runtime` 分支检查 `dist/latest.json`：云手机优先访问 jsDelivr，GitHub Raw 作为备用；清单每 5 分钟使用不同查询参数避免 CDN 旧缓存。
+3. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
+4. 在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
+5. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
+6. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
+7. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)` → `AppGame(uiconfig).run()` 进入正式调度。
+8. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
 
 ### uiconfig 关键字段
 - `task_list`：JSON 字符串，`[{"type": "mijin"}, ...]`，按顺序执行
@@ -169,10 +177,22 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 版本号在 `res/config.py` 的 `VERSION`，同时要更新 `res/ui/updateLogs.json`（界面"更新日志"页签数据源）。
 - 调试：在 `res/test/test1.py` 的 `test11` 中注释掉 `AppGame` 两行、取消注释对应任务的单跑代码。
 
+### GitHub 远程运行时发布
+
+- 仓库与分支：`qingushan/as-erchong` 的 `runtime` 分支；匿名下载要求仓库为公开仓库，脚本中禁止保存 GitHub Token 或 SSH 私钥。
+- 下载顺序：`cdn.jsdelivr.net/gh/...@runtime/` 优先，`raw.githubusercontent.com` 备用。国内云手机实测 GitHub Raw 可能不可达，jsDelivr 可访问。
+- 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
+- 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
+- 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
+- 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
+- 发布顺序：先完成代码与 UI 修改并同步本文档/`updateLogs.json` → 运行构建工具 → 检查清单 SHA-256 和 ZIP 内容 → 提交生成文件 → 推送到远程 `runtime` 分支 → 用设备启动验证日志出现“已加载远程运行时”。
+- 回滚方式：将 `runtime` 分支的 `dist/latest.json` 恢复为上一个已验证发布包的信息并推送；设备下次启动会切换到对应 `release_id`。若网络不可用，则继续使用设备当前缓存。
+
 ## 十一、更新记录（Devin 维护，代码变更时在此追加）
 
 | 日期 | 版本 | 变更摘要 |
 |---|---|---|
+| 2026-08-29 | 待发版 | 新增 GitHub 远程运行时方案：jsDelivr/Raw 双源下载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具，未修改版本号 |
 | 2026-08-28 | 待发版 | 调整活动芙洛拉分组赛战斗节奏：前 30 秒保持循环旋转，满 30 秒后加快重击并停止自动释放 E 和旋转，同时支持每局重置阶段 |
 | 2026-08-26 | 待发版 | 本地游戏将沉浸式戏剧、联袂演绎、活动技能策略迁移到独立控制器；活动芙洛拉开场在放大招前自动对准黄色任务图标；云游戏暂不调整 |
 | 2026-08-22 | 待发版 | 增加委托密函任务与整点刷新执行委托密函互斥校验，冲突配置禁止启动 |
