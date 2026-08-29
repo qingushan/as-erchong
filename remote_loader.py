@@ -338,7 +338,10 @@ def _load_remote_runtime():
     release_root = os.path.join(CACHE_ROOT, "releases", release_id)
     runtime_entry = os.path.join(release_root, RUNTIME_PACKAGE, "runtime_entry.py")
 
-    if not os.path.isfile(runtime_entry):
+    # 用入口文件是否已经存在区分“本次下载”与“已有远程缓存”。两种情况都
+    # 属于在线清单对应的远程版本，但日志应明确告诉维护者是否实际发生了下载。
+    is_cached = os.path.isfile(runtime_entry)
+    if not is_cached:
         archive_path = _download_package(
             package_path,
             expected_sha256,
@@ -360,7 +363,10 @@ def _load_remote_runtime():
             "sha256": expected_sha256,
         },
     )
-    print("已加载远程运行时：{}".format(release_id))
+    if is_cached:
+        print("已加载已缓存的远程运行时：{}".format(release_id))
+    else:
+        print("已下载并加载远程运行时：{}".format(release_id))
     return runtime
 
 
