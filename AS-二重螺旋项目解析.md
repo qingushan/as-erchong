@@ -66,7 +66,7 @@ erchong/
 ## 三、启动与数据流
 
 1. `__init__.py`（稳定入口）只调用 `remote_loader.start()`，不直接导入业务任务，确保用户首次导入的启动器可以长期保留。
-2. 加载器从 GitHub `runtime` 分支检查 `dist/latest.json`：云手机优先访问 jsDelivr，GitHub Raw 作为备用；清单每 5 分钟使用不同查询参数避免 CDN 旧缓存。
+2. 加载器从 GitHub `runtime` 分支检查 `dist/latest.json`：云手机优先访问 jsDelivr，GitHub Raw 作为备用；查询参数用于区分设备请求，但不能代替发布后的 jsDelivr 清缓存操作。
 3. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
 4. 在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
 5. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
@@ -185,7 +185,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
-- 发布顺序：先完成代码与 UI 修改并同步本文档/`updateLogs.json` → 运行构建工具 → 检查清单 SHA-256 和 ZIP 内容 → 提交生成文件 → 推送到远程 `runtime` 分支 → 用设备启动验证日志出现“已加载远程运行时”。
+- 发布顺序：先完成代码与 UI 修改并同步本文档/`updateLogs.json` → 运行构建工具 → 检查清单 SHA-256 和 ZIP 内容 → 提交生成文件 → 推送到远程 `runtime` 分支 → 请求 `https://purge.jsdelivr.net/gh/qingushan/as-erchong@runtime/dist/latest.json` 清理清单缓存 → 确认 jsDelivr 返回新 `release_id` → 用设备启动并检查 `active.json` 已切换到新发布标识。
 - 回滚方式：将 `runtime` 分支的 `dist/latest.json` 恢复为上一个已验证发布包的信息并推送；设备下次启动会切换到对应 `release_id`。若网络不可用，则继续使用设备当前缓存。
 
 ## 十一、更新记录（Devin 维护，代码变更时在此追加）
