@@ -17,7 +17,10 @@ REPOSITORY = "qingushan/as-erchong"
 RELEASE_BRANCH = "runtime"
 MANIFEST_PATH = "dist/latest.json"
 RUNTIME_PACKAGE = "erchong_runtime"
-CACHE_ROOT = R.sd("AScript", "erchong_runtime")
+# On current Android AScript, R.sd with multiple arguments returns a list of
+# independent paths instead of joining them. Pass one relative path so the
+# cache root is always a string usable by os.path functions.
+CACHE_ROOT = R.sd("AScript/erchong_runtime")
 MAX_PACKAGE_BYTES = 20 * 1024 * 1024
 
 SOURCE_BASES = (

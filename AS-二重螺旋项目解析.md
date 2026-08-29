@@ -181,7 +181,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 
 - 仓库与分支：`qingushan/as-erchong` 的 `runtime` 分支；匿名下载要求仓库为公开仓库，脚本中禁止保存 GitHub Token 或 SSH 私钥。
 - 下载顺序：`cdn.jsdelivr.net/gh/...@runtime/` 优先，`raw.githubusercontent.com` 备用。国内云手机实测 GitHub Raw 可能不可达，jsDelivr 可访问。
-- 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
+- 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；调用时必须使用 `R.sd("AScript/erchong_runtime")` 单个相对路径，当前 Android AScript 实测 `R.sd("AScript", "erchong_runtime")` 会返回两个路径组成的列表而非拼接字符串。`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
