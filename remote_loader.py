@@ -59,6 +59,20 @@ SOURCE_BASES = (
     ),
 )
 
+# jsDelivr 主入口在文件尚未进入边缘缓存时可能 301 跳转到 GitHub Raw；而部分
+# 云手机无法访问 Raw。以下两个 jsDelivr 节点实测会直接返回 ZIP，优先用于发布
+# 包下载；清单仍按 SOURCE_BASES 顺序读取，保持现有 CDN 优先级。
+PACKAGE_SOURCE_BASES = (
+    "https://testingcf.jsdelivr.net/gh/{repo}@{branch}/".format(
+        repo=REPOSITORY,
+        branch=RELEASE_BRANCH,
+    ),
+    "https://gcore.jsdelivr.net/gh/{repo}@{branch}/".format(
+        repo=REPOSITORY,
+        branch=RELEASE_BRANCH,
+    ),
+)
+
 
 class RuntimeUpdateError(Exception):
     """表示远程清单、下载内容或缓存结构不满足加载器约束。"""
@@ -212,8 +226,12 @@ def _download_package(package_path, expected_sha256, expected_size, preferred_ba
     temporary_path = os.path.join(CACHE_ROOT, "runtime-download.tmp")
     errors = []
 
-    bases = [preferred_base]
-    bases.extend(base for base in SOURCE_BASES if base != preferred_base)
+    # 发布包优先使用可直接返回 ZIP 的 jsDelivr 节点，避免主入口在未命中缓存
+    # 时重定向到云手机不可访问的 raw.githubusercontent.com。
+    bases = list(PACKAGE_SOURCE_BASES)
+    if preferred_base not in bases:
+        bases.append(preferred_base)
+    bases.extend(base for base in SOURCE_BASES if base not in bases)
     for source_base in bases:
         try:
             if os.path.exists(temporary_path):

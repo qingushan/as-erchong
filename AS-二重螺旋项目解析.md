@@ -180,7 +180,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 ### GitHub 远程运行时发布
 
 - 仓库与分支：`qingushan/as-erchong` 的 `runtime` 分支；匿名下载要求仓库为公开仓库，脚本中禁止保存 GitHub Token 或 SSH 私钥。
-- 下载顺序：`cdn.jsdelivr.net/gh/...@runtime/` 优先，`raw.githubusercontent.com` 备用。国内云手机实测 GitHub Raw 可能不可达，jsDelivr 可访问。
+- 下载顺序：清单优先读取 `cdn.jsdelivr.net/gh/...@runtime/`，失败后尝试 GitHub Raw；发布 ZIP 优先读取 `testingcf.jsdelivr.net`、`gcore.jsdelivr.net` 这两个可直出文件的 jsDelivr 节点，再尝试主 jsDelivr 和 Raw。原因是主 jsDelivr 在 ZIP 尚未命中缓存时可能 301 到 Raw，而国内云手机实测 Raw 不可达。
 - 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；调用时必须使用 `R.sd("AScript/erchong_runtime")` 单个相对路径，当前 Android AScript 实测 `R.sd("AScript", "erchong_runtime")` 会返回两个路径组成的列表而非拼接字符串。`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 启动日志区分三种来源：`已下载并加载远程运行时` 表示本次首次下载该 `release_id`；`已加载已缓存的远程运行时` 表示在线清单正常但设备已有对应缓存，跳过 ZIP 下载；`已加载上次成功缓存的远程运行时` 表示在线检查失败后使用 `active.json` 回退。
