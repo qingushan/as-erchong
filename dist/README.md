@@ -1,12 +1,11 @@
-# Runtime distribution
+# 运行时发布目录
 
-This directory is consumed by the stable AScript bootstrap.
+此目录由 AScript 稳定启动器读取。
 
-- Run `python tools/build_runtime_release.py` after application code or UI
-  changes.
-- Commit the generated `latest.json` and content-addressed ZIP.
-- Push the release commit to the GitHub `runtime` branch.
-- Do not edit `latest.json` or a release ZIP manually.
+- 修改业务代码或 UI 后，运行 `python tools/build_runtime_release.py`。
+- 提交生成的 `latest.json` 和以内容哈希命名的 ZIP。
+- 将发布提交推送到 GitHub 的 `runtime` 分支。
+- 不要手动编辑 `latest.json` 或发布 ZIP。
 
-The loader tries jsDelivr first and GitHub Raw second. The GitHub repository
-must be public for anonymous devices to download either URL.
+加载器优先访问 jsDelivr，失败后再尝试 GitHub Raw。GitHub 仓库必须为公开仓库，
+设备才能在不携带账号凭据的情况下下载这两个地址。

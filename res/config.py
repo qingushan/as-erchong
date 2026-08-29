@@ -3,9 +3,9 @@ import os as _os
 
 VERSION = "1.0.4.10"
 
-# Remote runtimes are extracted outside the original AScript project. Resolve
-# resources from this package instead of R.ui/R.res so downloaded HTML, fonts,
-# images, and other assets are used together with the downloaded Python code.
+# 远程运行时会被解压到原 AScript 工程之外，因此资源路径必须以当前运行时包
+# 为基准，不能继续依赖 R.ui/R.res。这样远程下载的 Python 才能与同一发布包
+# 中的 HTML、字库、图片等资源保持一致。
 PROJECT_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 

@@ -1,4 +1,4 @@
-"""Build a deterministic AScript runtime package and its release manifest."""
+"""构建内容可复现的 AScript 运行时包及其发布清单。"""
 
 import ast
 import hashlib
@@ -26,7 +26,7 @@ def read_version():
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == "VERSION":
                     return ast.literal_eval(node.value)
-    raise RuntimeError("VERSION not found in res/config.py")
+    raise RuntimeError("未在 res/config.py 中找到 VERSION")
 
 
 def runtime_files():
@@ -108,11 +108,11 @@ def main():
         encoding="utf-8",
     )
 
-    print("Runtime release built")
-    print("  release_id: {}".format(release_id))
-    print("  package: {}".format(package_path.relative_to(PROJECT_ROOT)))
-    print("  sha256: {}".format(package_sha256))
-    print("  manifest: {}".format(manifest_path.relative_to(PROJECT_ROOT)))
+    print("运行时发布包构建完成")
+    print("  发布标识: {}".format(release_id))
+    print("  发布包: {}".format(package_path.relative_to(PROJECT_ROOT)))
+    print("  SHA-256: {}".format(package_sha256))
+    print("  清单: {}".format(manifest_path.relative_to(PROJECT_ROOT)))
 
 
 if __name__ == "__main__":

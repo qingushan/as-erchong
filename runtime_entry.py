@@ -1,4 +1,4 @@
-"""Application entry shared by the bundled and downloaded runtimes."""
+"""工程内置运行时与远程运行时共用的业务入口。"""
 
 import json
 import time
@@ -26,8 +26,8 @@ def tunnel(key, value):
     print(uiconfig)
     print(uiconfig["mod_config_list"])
 
-    # Keep the Python-side guard because stale UI caches or external callers
-    # can bypass the equivalent validation in form-main.js.
+    # Python 入口必须保留同样的互斥校验，避免旧版 UI 缓存或外部调用绕过
+    # form-main.js 中的前端校验后启动冲突任务。
     if uiconfig.get("refresh_time_is_execute_mihan") == "on":
         try:
             task_list = json.loads(uiconfig.get("task_list", "[]"))
@@ -48,7 +48,7 @@ def tunnel(key, value):
 
 
 def start():
-    """Show the configuration UI and retain its window globally."""
+    """显示配置界面，并全局持有窗口对象以防被提前回收。"""
     global form_window
 
     print("运行时来源：{}".format(__package__))

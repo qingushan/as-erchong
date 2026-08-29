@@ -1,4 +1,4 @@
-"""Download, verify, cache, and load the current application runtime."""
+"""下载、校验、缓存并加载当前业务运行时。"""
 
 import hashlib
 import importlib
@@ -17,9 +17,9 @@ REPOSITORY = "qingushan/as-erchong"
 RELEASE_BRANCH = "runtime"
 MANIFEST_PATH = "dist/latest.json"
 RUNTIME_PACKAGE = "erchong_runtime"
-# On current Android AScript, R.sd with multiple arguments returns a list of
-# independent paths instead of joining them. Pass one relative path so the
-# cache root is always a string usable by os.path functions.
+# 当前 Android AScript 中，向 R.sd 传入多个参数会返回多个独立路径组成的列表，
+# 而不是拼接后的单一路径；这里传入一个相对路径，确保缓存根目录始终是可供
+# os.path 使用的字符串。
 CACHE_ROOT = R.sd("AScript/erchong_runtime")
 MAX_PACKAGE_BYTES = 20 * 1024 * 1024
 
