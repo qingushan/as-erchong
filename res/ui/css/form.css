@@ -1,0 +1,201 @@
+        /* 1. 顶部固定标题栏 */
+        .fixed-header {
+            display: flex;
+            height: 50px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 2. 菜单栏（滑动改造关键区域） */
+        .my-tab-header {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            z-index: 999;
+            background: #fff;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+
+            /* --- 核心修改1：强制开启滚动，使用 !important 覆盖 Layui JS 的干扰 --- */
+            overflow-x: auto !important; 
+            overflow-y: hidden !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch;
+            
+            /* 隐藏滚动条 */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .my-tab-header::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* --- 核心修改2：暴力隐藏 Layui 自动生成的“更多”下拉按钮 --- */
+        .layui-tab-bar {
+            display: none !important;
+        }
+
+        /* 3. 菜单项样式调整 */
+        .layui-tab-title li {
+            /* --- 核心修改3：确保排列在一行 --- */
+            display: inline-block !important; 
+            float: none !important; /* 必须取消浮动 */
+            width: auto;
+            min-width: 0;
+            padding: 0 20px;
+            vertical-align: top;
+        }
+
+        /* 选中状态下保留下划线/样式 */
+        .layui-tab-brief > .layui-tab-title .layui-this {
+             color: #009688; /* 这里可以改成你喜欢的颜色 */
+        }
+        
+        /* 修复 brief 模式下伪元素（下划线）的位置，因为 float:none 可能会导致对齐偏差 */
+        .layui-tab-brief > .layui-tab-title .layui-this:after {
+            border-bottom: 2px solid #009688;
+        }
+
+        /* 4. 内容区域 */
+        .content-body {
+            padding-top: 100px; 
+            padding-bottom: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .layui-tab-content {
+            padding: 10px 0;
+        }
+
+        .task-action-btn {
+            margin-left: 5px;
+        }
+
+        .reward-panel {
+            max-width: 360px;
+            margin: 0 auto;
+            padding: 8px 16px 4px;
+            text-align: center;
+            color: #666;
+        }
+
+        .reward-title {
+            margin-bottom: 8px;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .reward-desc {
+            margin-bottom: 6px;
+            line-height: 1.8;
+            font-size: 13px;
+        }
+
+        .reward-code {
+            width: 180px;
+            max-width: 58%;
+            height: auto;
+            display: inline-block;
+            margin: 12px 0 8px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 6px;
+            background: #fff;
+        }
+
+        .reward-tip {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /*      仅针对【任务菜单】的特殊修正           */
+        /* ========================================= */
+
+        /* 1. 允许任务卡片的内容溢出（否则下拉框会被卡片边缘切断） */
+        .special-task-card,
+        .special-task-card .layui-card-body {
+            overflow: visible !important;
+        }
+
+        /* 2. 给任务卡片底部增加高度，确保有空间“向下”展开菜单
+           如果不加这个，强制向下弹出的菜单可能会超出屏幕下边缘看不见
+        */
+        .special-task-card .layui-card-body {
+            padding-bottom: 220px !important; 
+        }
+
+        /* 3. 提高任务菜单下拉框的层级，确保它盖住顶部的固定标题栏 */
+        .special-select-wrapper .layui-form-select {
+            z-index: 2000 !important;
+        }
+
+        /* 4. 核心：不管 Layui 怎么计算，在“任务菜单”里必须强制向下弹出 */
+        .special-select-wrapper .layui-form-selectup dl {
+            top: 42px !important;    /* 强制定位在输入框下方 */
+            bottom: auto !important; /* 取消原本的底部定位 */
+            margin-bottom: 0 !important;
+        }
+
+        /* 任务列表按钮样式 */
+        .task-btns {
+            display: flex;
+            gap: 2px;
+        }
+        .task-btns .layui-btn {
+            padding: 0 5px; /* 缩小按钮内边距以适应手机屏幕 */
+        }
+
+        /* 更新日志弹窗样式 */
+        .log-container {
+            display: flex;
+            height: 100%;
+            background: #fff;
+        }
+
+        .log-left-menu {
+            width: 100px;
+            border-right: 1px solid #eee;
+            background: #f8f8f8;
+            overflow-y: auto;
+        }
+
+        .log-version-item {
+            padding: 12px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+            color: #333;
+        }
+
+        .log-version-item.active {
+            background: #fff;
+            color: #009688;
+            font-weight: bold;
+            border-right: 3px solid #009688;
+        }
+
+        .log-right-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .log-right-content h4 {
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 5px;
+        }

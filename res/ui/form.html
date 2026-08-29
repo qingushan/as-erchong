@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>大鲨鱼-二重螺旋</title>
+    <link rel="stylesheet" href="layui/css/layui.css">
+    <style>
+        /* 1. 顶部固定标题栏 */
+        .fixed-header {
+            display: flex;
+            height: 50px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 2. 菜单栏（滑动改造关键区域） */
+        .my-tab-header {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            z-index: 999;
+            background: #fff;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+
+            /* --- 核心修改1：强制开启滚动，使用 !important 覆盖 Layui JS 的干扰 --- */
+            overflow-x: auto !important; 
+            overflow-y: hidden !important;
+            white-space: nowrap !important;
+            -webkit-overflow-scrolling: touch;
+            
+            /* 隐藏滚动条 */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .my-tab-header::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* --- 核心修改2：暴力隐藏 Layui 自动生成的“更多”下拉按钮 --- */
+        .layui-tab-bar {
+            display: none !important;
+        }
+
+        /* 3. 菜单项样式调整 */
+        .layui-tab-title li {
+            /* --- 核心修改3：确保排列在一行 --- */
+            display: inline-block !important; 
+            float: none !important; /* 必须取消浮动 */
+            width: auto;
+            min-width: 0;
+            padding: 0 20px;
+            vertical-align: top;
+        }
+
+        /* 选中状态下保留下划线/样式 */
+        .layui-tab-brief > .layui-tab-title .layui-this {
+             color: #009688; /* 这里可以改成你喜欢的颜色 */
+        }
+        
+        /* 修复 brief 模式下伪元素（下划线）的位置，因为 float:none 可能会导致对齐偏差 */
+        .layui-tab-brief > .layui-tab-title .layui-this:after {
+            border-bottom: 2px solid #009688;
+        }
+
+        /* 4. 内容区域 */
+        .content-body {
+            padding-top: 100px; 
+            padding-bottom: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .layui-tab-content {
+            padding: 10px 0;
+        }
+
+        .task-action-btn {
+            margin-left: 5px;
+        }
+
+        .reward-panel {
+            max-width: 360px;
+            margin: 0 auto;
+            padding: 8px 16px 4px;
+            text-align: center;
+            color: #666;
+        }
+
+        .reward-title {
+            margin-bottom: 8px;
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .reward-desc {
+            margin-bottom: 6px;
+            line-height: 1.8;
+            font-size: 13px;
+        }
+
+        .reward-code {
+            width: 180px;
+            max-width: 58%;
+            height: auto;
+            display: inline-block;
+            margin: 12px 0 8px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 6px;
+            background: #fff;
+        }
+
+        .reward-tip {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /*      仅针对【任务菜单】的特殊修正           */
+        /* ========================================= */
+
+        /* 1. 允许任务卡片的内容溢出（否则下拉框会被卡片边缘切断） */
+        .special-task-card,
+        .special-task-card .layui-card-body {
+            overflow: visible !important;
+        }
+
+        /* 2. 给任务卡片底部增加高度，确保有空间“向下”展开菜单
+           如果不加这个，强制向下弹出的菜单可能会超出屏幕下边缘看不见
+        */
+        .special-task-card .layui-card-body {
+            padding-bottom: 220px !important; 
+        }
+
+        /* 3. 提高任务菜单下拉框的层级，确保它盖住顶部的固定标题栏 */
+        .special-select-wrapper .layui-form-select {
+            z-index: 2000 !important;
+        }
+
+        /* 4. 核心：不管 Layui 怎么计算，在“任务菜单”里必须强制向下弹出 */
+        .special-select-wrapper .layui-form-selectup dl {
+            top: 42px !important;    /* 强制定位在输入框下方 */
+            bottom: auto !important; /* 取消原本的底部定位 */
+            margin-bottom: 0 !important;
+        }
+
+        /* 任务列表按钮样式 */
+        .task-btns {
+            display: flex;
+            gap: 2px;
+        }
+        .task-btns .layui-btn {
+            padding: 0 5px; /* 缩小按钮内边距以适应手机屏幕 */
+        }
+
+        /* 更新日志弹窗样式 */
+        .log-container {
+            display: flex;
+            height: 100%;
+            background: #fff;
+        }
+
+        .log-left-menu {
+            width: 100px;
+            border-right: 1px solid #eee;
+            background: #f8f8f8;
+            overflow-y: auto;
+        }
+
+        .log-version-item {
+            padding: 12px 10px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            text-align: center;
+            color: #333;
+        }
+
+        .log-version-item.active {
+            background: #fff;
+            color: #009688;
+            font-weight: bold;
+            border-right: 3px solid #009688;
+        }
+
+        .log-right-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .log-right-content h4 {
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body class="layui-bg-gray">
+
+<!-- 唯一的 Form 包裹所有内容，保证所有 Tab 的数据都能被提交 -->
+<form class="layui-form" lay-filter="formFilter">
+
+    <!-- 1. 顶部固定操作栏 -->
+    <div class="layui-bg-blue fixed-header">
+        <div class="layui-col-xs3" style="display: flex; justify-content: center; align-items: center;">
+            <button id="asui_close" type="button" class="layui-btn layui-bg-blue" style="border: none;">
+                <i class="layui-icon layui-icon-close" style="font-size: 20px;"></i>
+            </button>
+        </div>
+        <div class="layui-col-xs6" style="display: flex; justify-content: center; align-items: center;">
+            <p style="margin: 0; font-size: 16px;">大鲨鱼-二重螺旋</p>
+        </div>
+        <div class="layui-col-xs3" style="display: flex; justify-content: center; align-items: center;">
+            <button id="asui_submit" lay-submit type="button" lay-filter="demo2"
+                    class="layui-btn layui-btn-warm layui-btn-xs layui-btn-radius"
+                    style="padding: 0 15px; height: 30px; line-height: 30px;">
+                运行
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. 选项卡结构 -->
+    <div class="layui-tab layui-tab-brief" lay-filter="mainTab">
+
+        <!-- 横向滑动菜单 -->
+        <ul class="layui-tab-title my-tab-header">
+            <li class="layui-this">任务</li>
+            <li>全局配置</li>
+            <li>关于脚本</li>
+            <li>打赏</li>
+            <li>日常任务</li>
+            <li>迷津</li>
+            <li>夜航手册</li>
+            <li>皎皎币</li>
+            <li>角色突破</li>
+            <li>角色经验</li>
+            <li>魔之楔</li>
+            <li>武器突破</li>
+            <li>武器经验</li>
+            <li>护送</li>
+            <li>委托密函</li>
+            <li>钓鱼</li>
+            <li>沉浸式戏剧</li>
+            <li>活动</li>
+            <li>灾厄武器</li>
+            <li>联袂演绎</li>
+        </ul>
+
+        <!-- 菜单对应的内容 -->
+
+        <div class="layui-tab-content content-body">
+
+            <!-- 页面 任务 -->
+            <div class="layui-tab-item layui-show">
+                <div class="layui-card special-task-card">
+                    <div class="layui-card-header">任务管理</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips" style="color: red"></i> 很重要，看完这里！！！！！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：在启动脚本前请确保游戏内布局设置是【方案一】并重置
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：在启动脚本前请确保游戏UI缩放是100%
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：as软件如有更新，推荐更新到最新版
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：所有任务在主界面启动即可
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：重要：所有副本禁止开启游戏自带的自动轮次！！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：可添加多个任务，脚本将按照列表顺序依次执行任务
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：当勾选【循环任务】时，任务列表全部执行完毕的时候会从头开始执行
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：运行云游戏功能时再任务列表中添加【云-XXXX】即可，任务列表中不可同时存在本地游戏和云游戏功能
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：运行云游戏功能时需将【闪退检测】功能关闭，云游戏暂不支持闪退检测
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 提示：运行云游戏功能时需将【整点刷新执行委托密函】功能关闭，云游戏暂不支持【整点刷新执行委托密函】
+                            </div>
+                        </div>
+
+                        <!-- 添加任务的操作栏 -->
+                        <div class="layui-form-item">
+                            <div class="layui-row layui-col-space10">
+                                <div class="layui-col-xs7 special-select-wrapper">
+                                    <select id="task_select_type">
+                                        <option value="daily_task">日常任务</option>
+                                        <option value="mijin">迷津</option>
+                                        <option value="mod">夜航手册</option>
+                                        <option value="jiaojiaobi">皎皎币</option>
+                                        <option value="role_tupo">角色突破</option>
+                                        <option value="role_exp">角色经验</option>
+                                        <option value="mozhixie">魔之楔</option>
+                                        <option value="wuqi_tupo">武器突破</option>
+                                        <option value="wuqi_exp">武器经验</option>
+                                        <option value="husong">护送</option>
+                                        <option value="mihan">委托密函</option>
+                                        <option value="fish">钓鱼</option>
+                                        <option value="cjsxj">沉浸式戏剧</option>
+                                        <option value="game_activity">活动</option>
+                                        <option value="ze_weapon">灾厄武器</option>
+                                        <option value="lmyy">联袂演绎</option>
+                                        <option value="cloud_wuqi_tupo">云-武器突破</option>
+                                        <option value="cloud_role_tupo">云-角色突破</option>
+                                        <option value="cloud_wuqi_exp">云-武器经验</option>
+                                        <option value="cloud_game_activity">云-活动</option>
+                                    </select>
+                                </div>
+                                <div class="layui-col-xs5">
+                                    <button type="button" class="layui-btn layui-btn-normal layui-btn-fluid" id="btn_add_task">
+                                        <i class="layui-icon layui-icon-add-1"></i> 添加
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <input type="checkbox" name="task_loop" title="循环任务">
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- 任务列表展示区域 -->
+                        <table class="layui-table" lay-skin="nob">
+                            <colgroup>
+                                <col width="50">
+                                <col>
+                                <col width="60">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>序</th>
+                                    <th>任务名称</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="task_list_body">
+                                <!-- JS 会把任务动态插入到这里 -->
+                            </tbody>
+                        </table>
+
+                        <!-- 如果没有任务显示的提示 -->
+                        <div id="task_empty_tip" style="text-align: center; color: #999; padding: 20px; display: none;">
+                            暂无任务，请点击上方添加
+                        </div>
+
+                        <!-- 关键：隐藏的 input，用来存储任务数组的 JSON 字符串，以便 form 提交 -->
+                        <input type="hidden" name="task_list" id="input_task_list" value="[]">
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 全局配置 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">全局配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 勾选【整点刷新执行委托密函】功能后在其他任务执行到一半时如果到整点委托密函刷新之后会在当前任务结束（或波次结束）时结束当前任务，去执行委托密函，当委托密函执行完毕后会重新执行当前任务。
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 勾选【整点刷新执行委托密函】功能后无需在任务列表中添加【委托密函】任务，且所有任务都支持整点刷新后执行委托密函
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 勾选【整点刷新执行委托密函】功能后当委托密函执行完毕后重新执行当前任务时不会继承之前的运行次数，会从0重新开始
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 勾选【整点刷新执行委托密函】功能后执行第一个任务时会自动优先去执行委托密函，这是正常现象，因为当前该时间未执行过委托密函
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 勾选【每日五点十分退游戏】功能后当每日05:10时会触发返回手机桌面触发掉线检测，在任务列表中添加【日常任务】配合【掉线检测】功能实现05:10时重启游戏并重新执行任务从而达到7*24小时挂机
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="global_check_month_card" title="小月卡检测" value="on">
+                            <input type="checkbox" name="global_check_game_is_offline" title="掉线检测" value="on">
+                            <input type="checkbox" name="global_do_mosaic" title="UID打码" value="on">
+                            <input type="checkbox" name="refresh_time_is_execute_mihan" title="整点刷新执行委托密函" value="on">
+                            <input type="checkbox" name="global_time_5_offline" title="每日五点十分退游戏" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <input type="checkbox" name="global_timed_offline" title="定时下线" value="on">
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">下线时间</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" class="layui-input" id="ID-laydate-type-time" name="global_timed_offline_value" placeholder="HH:mm:ss">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 关于脚本 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-body" style="text-align: center; color: #666;">
+                        <h3 id="about_title">大鲨鱼助手 v1.0.0.0</h3>
+                        <p style="margin-top: 10px;">交流群: 1070662284</p>
+                        <hr>
+                        <p>本脚本为免费分享,仅供学习交流使用</p>
+                        <hr>
+                        <p id="about_version">版本信息：v1.0.0.0</p>
+                        <hr>
+                        <div style="margin-top: 20px;">
+                            <button type="button" class="layui-btn layui-btn-primary layui-btn-radius" id="btn_show_logs">
+                                <i class="layui-icon layui-icon-list"></i> 更新日志
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 打赏 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">打赏</div>
+                    <div class="layui-card-body">
+                        <div class="reward-panel">
+                            <div class="reward-title">感谢支持</div>
+                            <p class="reward-desc">脚本会继续免费分享，用得顺手就是对我最大的鼓励。</p>
+                            <p class="reward-desc">如果它确实帮你省了时间，也欢迎随缘打赏一杯快乐水。</p>
+                            <img class="reward-code" src="../img/code.png" alt="收款码">
+                            <p class="reward-tip">感谢每一份支持，我会继续维护和优化。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 日常任务 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">日常任务</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 可自定义选择需要执行的每日任务，当全部勾选后则可以领满每日历练奖励
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 夜航手册默认执行40级第一个关卡3次，配置采用夜航手册菜单设置的配置
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 任务执行顺序：夜航手册-拍照-领取鱼饵-领取玩具气球-领取每日历练奖励，如果不勾选则跳过不执行
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="daily_task_mod" title="夜航手册" value="on">
+                            <input type="checkbox" name="daily_task_take_a_picture" title="拍照" value="on">
+                            <input type="checkbox" name="daily_task_get_fishing_lure" title="领取鱼饵" value="on">
+                            <input type="checkbox" name="daily_task_get_wjqc" title="领取玩具气球" value="on">
+                            <input type="checkbox" name="daily_task_get_daily_award" title="领取每日历练奖励" value="on">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 迷津设置 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 80迷津推荐配置：2命止流及以上+专武+回血魔灵。buff推荐不点怪物受到伤害降低、最大生命提高、攻击提高，其他都可点满
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 远程武器选择只会影响boss战斗的方式
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 目前该版本还处于测试版，如遇上bug等问题可以勾选运行旧版本运行旧版本
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="mijin_run_old" title="运行旧版本" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">迷津次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="mijin_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">迷津等级</label>
+                            <div class="layui-input-block">
+                                <select name="mijin_grade">
+                                    <option value="30">30</option>
+                                    <option value="40">40</option>
+                                    <option value="50">50</option>
+                                    <option value="60">60</option>
+                                    <option value="70">70</option>
+                                    <option value="80" selected>80</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">选择角色</label>
+                            <div class="layui-input-block">
+                                <select name="mijin_role">
+                                    <option value="0">水母</option>
+                                    <option value="1">夫人</option>
+                                    <option value="2">止流</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">选门优先级</label>
+                            <div class="layui-input-block">
+                                <select name="mijin_select_door">
+                                    <option value="0" selected>蓝门>黄门>红门</option>
+                                    <option value="1">红门>蓝门>黄门</option>
+                                    <option value="2">蓝门>红门>黄门</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">远程武器</label>
+                            <div class="layui-input-block">
+                                <select name="mijin_ranged_weapon">
+                                    <option value="0" selected>其他</option>
+                                    <option value="1">花弓</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 220px;">普通战斗魔灵释放间隔</span>
+                                    <input type="number" name="mijin_combat_common_time" value="10" placeholder="普通战斗魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 220px;">BOSS战斗魔灵释放间隔</span>
+                                    <input type="number" name="mijin_combat_boss_time" value="5" placeholder="普通战斗魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 夜航手册设置 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 支持所有等级副本，技能、大招释放间隔设置为负数即不释放
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 60级的驱逐本主控水母+飞枪(枯朽+紫蓄力速度5+蓝迅捷5)，水母范围拉满，队友禁止携带黎涩避免秒怪影响识别！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 65级可能会卡怪，打一次时间较久，推荐使用黎瑟
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 委托手册轮次,支持多个轮次,以逗号隔开,-1则表示每轮都使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 每条执行配置可独立设置轮数，仅扼守关卡生效，其他类型保持原逻辑
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 因为收获日活动会导致关卡位置改变，所以如果当前是收获日的话需勾选下方《收获日》按钮
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 收获日可能会有个别无法点到的关卡，比如第五个关卡，如果需执行这些关卡可在脚本执行到选关的时候手动选择关卡即可
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 1.3版本更新后60的副本较多，目前还不支持选择【第六个关卡】、【第七个关卡】功能，关卡新增【60级驱逐】选项，当需要打60级驱逐时关卡选择【60级驱逐】，然后手动进本。重要！！！打60级驱逐才选【60级驱逐】，打60驱离不要选这个！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效（魔灵技能依然生效），默认使用内置搓招
+                            </div>
+                        </div>
+
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="mod_activity_shr" title="收获日" value="on">
+                        </div>
+
+                        <!-- 添加配置的操作区域 -->
+                        <div class="layui-form-item" style="background: #f8f8f8; padding: 10px; border-radius: 4px;">
+                            <div class="layui-row layui-col-space5">
+                                <div class="layui-col-xs3">
+                                    <select id="add_mod_grade">
+                                        <option value="20">20级</option>
+                                        <option value="30">30级</option>
+                                        <option value="40">40级</option>
+                                        <option value="50">50级</option>
+                                        <option value="55">55级</option>
+                                        <option value="60">60级</option>
+                                        <option value="65" selected>65级</option>
+                                        <option value="70">70级</option>
+                                        <option value="75">75级</option>
+                                        <option value="80">80级</option>
+                                    </select>
+                                </div>
+                                <div class="layui-col-xs3">
+                                    <input type="number" id="add_mod_num" value="10" placeholder="次数" class="layui-input">
+                                </div>
+                                <div class="layui-col-xs3">
+                                    <input type="number" id="add_mod_boci" value="1" min="1" placeholder="轮次" class="layui-input">
+                                </div>
+                                <div class="layui-col-xs3">
+                                    <select id="add_mod_level">
+                                        <option value="第一个" selected>第一个</option>
+                                        <option value="第二个">第二个</option>
+                                        <option value="第三个">第三个</option>
+                                        <option value="第四个">第四个</option>
+                                        <option value="第五个">第五个</option>
+                                        <option value="倒数第一个">倒数第一个</option>
+                                        <option value="倒数第二个">倒数第二个</option>
+                                        <option value="倒数第三个">倒数第三个</option>
+                                        <option value="倒数第四个">倒数第四个</option>
+                                        <option value="倒数第五个">倒数第五个</option>
+                                        <option value="60级驱逐">60级驱逐</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-row" style="margin-top: 5px;">
+                                <button type="button" class="layui-btn layui-btn-sm layui-btn-fluid layui-btn-normal" id="btn_add_mod_config">
+                                    <i class="layui-icon layui-icon-add-1"></i> 添加执行配置
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 配置列表展示表格 -->
+                        <table class="layui-table" lay-skin="line" style="margin-top: 0;">
+                            <colgroup>
+                                <col width="60">
+                                <col width="60">
+                                <col width="60">
+                                <col>
+                                <col width="50">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>等级</th>
+                                    <th>次数</th>
+                                    <th>轮次</th>
+                                    <th>关卡</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mod_config_body">
+                                <!-- 动态插入 -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- 隐藏域：用于存储 JSON 数据提交给后端 -->
+                        <input type="hidden" name="mod_config_list" id="input_mod_config_list" value="[]">
+
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="mod_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="mod_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="mod_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="mod_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mod_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="mod_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mod_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="mod_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mod_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 皎皎币 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 有的关卡需要飞枪，有的不需要，具体在选择关卡查看。飞枪(枯朽+紫蓄力速度5+蓝迅捷5),如寻路有问题请更换水母试试
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 委托手册轮次,支持多个轮次,以逗号隔开,-1则表示每轮都使用。举例如下:
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> -1    表示所有轮次都使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 3    表示只有第3轮使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 3,5,7    表示只有第3轮、第5轮、第7轮使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效（魔灵技能依然生效），默认使用内置搓招
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="jjb_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="jjb_grade">
+                                    <option value="50" selected>50(不需要飞枪)</option>
+                                    <option value="80">80(不需要飞枪)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">打几轮</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="jjb_boci_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="jjb_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="jjb_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="jjb_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="jjb_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="jjb_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="jjb_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="jjb_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="jjb_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="jjb_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 角色突破 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 支持云和本地，云和本地支持的等级不一样，具体可查看等级备注
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 云游戏需要飞枪(满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10),本地和云游戏都需要巧手
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 云游戏时队友尽量不要携带黎涩，因为黎涩开大之后会增加队友移速导致寻路有问题
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> -1    表示所有轮次都使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 3    表示只有第3轮使用
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 3,5,7    表示只有第3轮、第5轮、第7轮使用
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="role_tupo_capture_moling" title="抓魔灵(该功能未开发完成,请忽略)" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="role_tupo_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="role_tupo_grade">
+                                    <option value="10">10(云)</option>
+                                    <option value="30" selected>30(本地)</option>
+                                    <option value="60">60(本地)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本属性</label>
+                            <div class="layui-input-block">
+                                <select name="role_tupo_property">
+                                    <option value="水" selected>水</option>
+                                    <option value="火">火</option>
+                                    <option value="风">风</option>
+                                    <option value="雷">雷</option>
+                                    <option value="光">光</option>
+                                    <option value="暗">暗</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">打几轮</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="role_tupo_boci_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="role_tupo_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="role_tupo_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="role_tupo_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="role_tupo_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_tupo_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="role_tupo_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_tupo_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="role_tupo_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_tupo_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 角色经验 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="role_exp_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="role_exp_grade">
+<!--                                    <option value="5">5</option>-->
+<!--                                    <option value="20">20</option>-->
+<!--                                    <option value="35">35</option>-->
+                                    <option value="40" selected>40</option>
+<!--                                    <option value="50">50</option>-->
+<!--                                    <option value="60">60</option>-->
+<!--                                    <option value="70" selected>70</option>-->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="role_exp_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="role_exp_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="role_exp_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="role_exp_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_exp_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="role_exp_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_exp_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="role_exp_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="role_exp_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 魔之楔 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="mozhixie_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="mozhixie_grade">
+                                    <option value="40">40</option>
+                                    <option value="60" selected>60</option>
+                                    <option value="80">80</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="mozhixie_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="mozhixie_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="mozhixie_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="mozhixie_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mozhixie_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="mozhixie_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mozhixie_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="mozhixie_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mozhixie_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 武器突破 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 本地游戏要求
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 运行该功能前推荐前往设置吧人群密度调到最低，减少游戏卡顿的情况，提高成功率，不使用功能后记得修改回来！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 配置:魔灵巧手、主控水母+扶苏+赛琪，禁止携带黎瑟！容易被怪击飞的推荐水母带磐石
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 云游戏要求
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 主控水母+磐石，飞枪(满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10)，队友带扶苏、菲娜
+                                <br>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="wuqi_tupo_moling_run" title="使用魔灵遁逃（本地游戏和云游戏都可使用）" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="wuqi_tupo_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="wuqi_tupo_grade">
+                                    <option value="70" selected>70(本地、云)</option>
+                                    <option value="80">80(本地、云)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="wuqi_tupo_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="wuqi_tupo_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 武器经验 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 本地游戏配置：主控水母(范围拉满)+飞枪(枯朽+紫蓄力速度5+蓝迅捷5)，队友禁止携带黎涩避免秒怪影响识别！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 云游戏会自动抓魔灵
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 云游戏配置：主控水母(必须带磐石，范围拉满，配置越高越好)+飞枪(满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10)，队友扶苏+赛琪(禁止携带黎涩)
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="wuqi_exp_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="wuqi_exp_grade">
+                                    <option value="50" selected>50(本地)</option>
+                                    <option value="60" selected>60(云)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="wuqi_exp_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="wuqi_exp_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 护送 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> PS：现在护送推荐刷70/80夜航手册金图纸，卖金图纸即可！！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 魔灵必须携带有巧手的，开门让ai队友开门
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 运行该功能前推荐前往设置吧人群密度调到最低，减少游戏卡顿的情况，提高成功率，不使用功能后记得修改回来！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 主控榛子+磐石，需要飞枪(枯朽+紫蓄力速度5+蓝迅捷5)，ai队友带扶疏、黎瑟
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="husong_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="husong_grade">
+                                    <option value="70" selected>70</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">委托手册(倍率卷)</label>
+                            <div class="layui-input-block">
+                                <select name="husong_level_more_award">
+                                    <option value="0" selected>不使用</option>
+                                    <option value="1">委托手册一(绿色)</option>
+                                    <option value="2">委托手册二(蓝色)</option>
+                                    <option value="3">委托手册三(紫色)</option>
+                                    <option value="4">委托手册四(金色)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">使用委托手册轮次</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="husong_level_more_award_boci" value="-1" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 委托密函 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 在下方可自定义选择可攻打的委托类型与副本类型，委托类型可支持多个委托，比如角色、武器、魔之楔。当某一个委托没有密函碎片或者没有可执行任务之后会自动执行下一个委托任务，委托任务的执行顺序：角色-武器-魔之楔
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 需要巧手,如寻路有问题请更换水母试试。扼守需要飞枪(枯朽+紫蓄力速度5+蓝迅捷5)
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 密函默认选择第一个，魔之楔、角色奖励默认选择第一个。武器奖励如果出金则选择金，否则选择持有数最少的
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 目前仅支持：驱离、扼守、探险，当没有以上任务类型或者没有密函之后会自动结束当前任务以便执行下一个任务
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当运行到一半时会自动退出重新识别当前委托任务类型，如果没有符合的任务类型则会结束当前任务
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【主控角色搓招】为自定义时下方的大招和技能设置正常生效，当选择特定主控角色搓招时，下方的大招和技能设置将会失效（魔灵技能依然生效），默认使用内置搓招
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label" style="width: 100px;">委托密函类型：</label>
+                            <div class="layui-input-block">
+                                <input type="checkbox" name="mihan_task_level_role" title="角色" value="on">
+                                <input type="checkbox" name="mihan_task_level_weapon" title="武器" value="on">
+                                <input type="checkbox" name="mihan_task_level_mod" title="魔之楔" value="on">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本类型：</label>
+                            <div class="layui-input-block">
+                                <input type="checkbox" name="mihan_level_type_quli" title="驱离" value="on">
+                                <input type="checkbox" name="mihan_level_type_tanxian" title="探险" value="on">
+                                <!-- <input type="checkbox" name="mihan_level_type_esho" title="扼守" value="on"> -->
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="mihan_max_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">打几轮（如果有无尽关卡）</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="mihan_boci_num" value="10" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="mihan_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="mihan_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mihan_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="mihan_skill_q_time" value="9999" placeholder="大招释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mihan_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="mihan_skill_z_time" value="30" placeholder="魔灵释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="mihan_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 钓鱼 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 在主界面运行即可，可支持选择多个钓点，当第一个钓点钓完之后会自动前往下一个钓点继续执行。新地图钓点推荐吧联机关掉！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 悠闲和无悠闲都支持，会自动识别。鱼竿推荐大师杆，鱼竿等级越高，成功率越高
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当没有鱼饵或者当前钓点钓鱼次数到达上限后会自动结束当前钓点
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 推荐关闭游戏【自动进入联机区域】，以免影响寻路以及识别
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【疯狂钓鱼】，快速钓鱼，魔灵必须携带悠闲，鱼竿最高品质。当勾选时钓鱼计数将失效，当一个钓点的鱼钓完后会自动切换下一个钓点。（PS:因为手机端连续点击过快会导致游戏卡死，所以点击增加了一些随机延迟）
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="fish_insane" title="疯狂钓鱼" value="on">
+                        </div>
+                        <div class="layui-card-body">
+                            <label>请选择下方钓点，可多选。钓点执行顺序：冰湖城->净界岛->下水道</label>
+                            <div class="layui-form-item">
+                                <input type="checkbox" name="fish_map_bhc" title="冰湖城" value="on">
+                                <input type="checkbox" name="fish_map_jjd" title="净界岛"> 
+                                <input type="checkbox" name="fish_map_xsd" title="下水道"> 
+                                <input type="checkbox" name="fish_map_fxb" title="浮星埠">
+                                <input type="checkbox" name="fish_map_bnc" title="百年春">
+                                <input type="checkbox" name="fish_map_csy" title="潮声岩">
+                                <input type="checkbox" name="fish_map_krg" title="枯荣阁">
+                                <input type="checkbox" name="fish_map_wms" title="微茫市">
+                                <input type="checkbox" name="fish_map_djyw" title="东郊野外">
+                                <input type="checkbox" name="fish_map_cxq" title="城西区">
+                                <input type="checkbox" name="fish_map_ylx" title="由来巷">
+                                <input type="checkbox" name="fish_map_bhcz" title="百花车站">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">每个钓点钓多少次</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="fish_max_num" value="100" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 沉浸式戏剧 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 在主界面运行即可，默认只打不朽剧目的，请确定运行前不朽剧目已开启，会自动识别并选择未打的关卡
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 技能全部自定义设置，可自己研究配队。本期戏剧通关配对参考：主控水母(带磐石)+赛琪+扶疏+魔灵：大月卡风系魔灵。技能设置：技能释放间隔：7，技能释放次数：5，大招释放间隔：0，大招释放次数：1
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当打不过或者副本次数满足条件时会自动结束任务并返回主界面方便执行下一个任务
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="cjsxj_max_num" value="100" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色搓招</label>
+                            <div class="layui-input-block">
+                                <select name="cjsxj_role_skill">
+                                    <option value="0" selected>自定义</option>
+                                    <option value="1-1">赛琪原地e</option>
+                                    <option value="2-1">止流龙喷</option>
+                                    <option value="8-1">芙洛拉</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">技能释放间隔</span>
+                                    <input type="number" name="cjsxj_skill_e_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="cjsxj_skill_e_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">大招释放间隔</span>
+                                    <input type="number" name="cjsxj_skill_q_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="cjsxj_skill_q_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="cjsxj_skill_z_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="cjsxj_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 活动 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 凹分推荐开60帧+人群密度最高！！！
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 参考配置：主控芙洛拉(专武+灾厄)+菲娜+猪妹挂机流，具体参考攻略
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 分组赛需勾选下方【分组赛】选项,分组赛和巅峰赛的战斗逻辑不一样，请根据需要勾选
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">活动</label>
+                            <div class="layui-input-block">
+                                <select name="game_activity_name">
+                                    <option value="狩月人之阶">狩月人之阶</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色</label>
+                            <div class="layui-input-block">
+                                <select name="game_activity_role">
+                                    <option value="7-4" selected>煜明</option>
+                                    <option value="2-4">止流</option>
+                                    <option value="3-4">苏乙</option>
+                                    <option value="8-4">芙洛拉</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本等级</label>
+                            <div class="layui-input-block">
+                                <select name="game_activity_grade">
+                                    <option value="60">60</option>
+                                    <option value="75">75</option>
+                                    <option value="110" selected>110</option>
+                                    <option value="150">150</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="game_activity_max_num" value="100" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="game_activity_get_score" title="狩月人之阶-分组赛" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 120px;">魔灵释放间隔</span>
+                                    <input type="number" name="game_activity_skill_z_time" value="9999" placeholder="技能释放间隔" class="layui-input" style="height: 32px;">
+                                </div>
+                                <div style="display: flex; align-items: center; flex: 1;">
+                                    <span style="white-space: nowrap; font-size: 12px; width: 65px;">释放次数</span>
+                                    <input type="number" name="game_activity_skill_z_count" value="1" placeholder="释放次数" class="layui-input" style="height: 32px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 灾厄本 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 支持单人、多人（双人、三人）。多人模式下必须先手动组队好再启动脚本，多人模式-队员 先启动脚本，然后 多人模式-房主 再启动
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当选择 多人模式-队员 时，默认使用阵容一，确保阵容一是正确的
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 背包最少要有两个深境罗盘！！！不然会影响识别
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 默认选择最低等级的深境罗盘
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 打到多少级是由房主的设置决定，其余人的设置不生效
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 多人模式下，房主必须携带巧手，由房主去开锁
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 只有 多人模式-房主、单人模式 会识别副本等级
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 双人推荐：1.苏乙（主控）+扶苏  2.猪妹（主控）+苏乙  目前满配可挂机过195级
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 猪妹和扶苏推荐都带磐石
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 主控猪妹时，队友必须有扶苏，猪妹技能效益拉满（一次e技能消耗5蓝）
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 三人推荐：1.苏乙 + 扶苏 + 猪妹
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 芙罗拉推荐单人吃光剩饭到220级罗盘,参考队友猪妹+扶苏,高层推荐刷一轮直接退出再刷下一轮(【打到多少级】设置为100即可)
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i>当勾选【半自动】时，可在游戏内找好点位再启动，会根据主控角色设置进行搓招和自动下一轮，当单人模式时模式必须选择【单人模式】，多人时选【多人模式-房主】或【多人模式-队员】都可
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="ze_weapon_semi_automatic" title="半自动" value="on">
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本类型</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_level_type">
+                                    <option value="探险" selected>探险</option>
+                                    <option value="扼守">扼守</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">模式</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_level">
+                                    <option value="0" selected>多人模式-房主</option>
+                                    <option value="1">多人模式-队员</option>
+                                    <option value="2">单人模式</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_role">
+                                    <option value="3-2" selected>苏乙</option>
+                                    <option value="4-2">扶疏</option>
+                                    <option value="5-2">猪妹</option>
+                                    <option value="2-1">止流</option>
+                                    <option value="7-1">煜明</option>
+                                    <option value="6-2">菲娜(测试)</option>
+                                    <option value="8-2">芙罗拉(吃剩饭)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本属性</label>
+                            <div class="layui-input-block">
+                                <select name="ze_weapon_property">
+                                    <option value="水" selected>水</option>
+                                    <option value="火">火</option>
+                                    <option value="风">风</option>
+                                    <option value="雷">雷</option>
+                                    <option value="光">光</option>
+                                    <option value="暗">暗</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">副本次数</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="ze_weapon_max_num" value="3" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">打到多少级</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="ze_weapon_max_grade" value="180" placeholder="请输入次数" class="layui-input">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面 联袂演绎 -->
+            <div class="layui-tab-item">
+                <div class="layui-card">
+                    <div class="layui-card-header">基础配置</div>
+                    <div class="layui-card-body">
+                        <div>
+                            <div style="color: #666; font-size: 12px;">
+                                <i class="layui-icon layui-icon-tips"></i> 推荐主控猪妹+扶苏+任意C,猪妹技能效益拉到最高，尽量降低蓝耗，魔灵推荐回血魔灵
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 全自动蹭房+房间冷却好后自动打，自动领取奖励
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 可自定义副本筛选条件，下面勾选哪个在筛选时就会勾选哪个，如果都不想筛选的话直接默认全空着就好了，如果筛选了箱子，等级想全选，等级那里也直接空着就好
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当大厅没有可打的副本时，会一直刷新直到副本出现（蹲点）
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【追踪BOSS方式】即战斗时追踪boss的方式分为螺旋飞跃和飞枪，飞枪要求 满精春玦戟、穿引共鸣+5、迅捷蓄势+5、金迅捷+10，其他飞枪自行测试。推荐使用飞枪
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 当勾选【半自动】时需在联袂演绎具体房间界面启动，会自动进入副本并开始战斗，注意该功能只会战斗一次
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 主控芙洛拉参考配置：魔灵：摇摇火尾，武器：太刀+华光缭乱（其余配置自行找攻略）
+                                <br>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="checkbox" name="lmyy_semi_automatic" title="半自动" value="on">
+                        </div>
+                        <br>
+                        <p> ========================== 筛选条件 ========================== </p>
+                         <div class="layui-card-body">
+                            <div class="layui-form-item">
+                                <p> ===奖励筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_money" title="铜币" value="on">
+                                <input type="checkbox" name="lmyy_select_hd" title="红豆" value="on">
+                                <input type="checkbox" name="lmyy_select_jjb" title="娇娇币" value="on">
+                                <input type="checkbox" name="lmyy_select_role_exp" title="角色经验" value="on">
+                                <input type="checkbox" name="lmyy_select_weapon_exp" title="武器经验" value="on">
+                                <input type="checkbox" name="lmyy_select_wtmhxs" title="线索" value="on">
+                            </div>
+                            <div class="layui-form-item">
+                                <p> ===等级筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_grade_50" title="50" value="on">
+                                <input type="checkbox" name="lmyy_select_grade_70" title="70" value="on"> 
+                                <input type="checkbox" name="lmyy_select_grade_90" title="90" value="on"> 
+                                <input type="checkbox" name="lmyy_select_grade_110" title="110" value="on">
+                            </div>
+                            <div class="layui-form-item">
+                                <p> ===倍率筛选=== </p>
+                                <input type="checkbox" name="lmyy_select_scale_100" title="100%" value="on">
+                                <input type="checkbox" name="lmyy_select_scale_200" title="200%" value="on"> 
+                                <input type="checkbox" name="lmyy_select_scale_800" title="800%" value="on"> 
+                                <input type="checkbox" name="lmyy_select_scale_2000" title="2000%" value="on">
+                            </div>
+                        </div>
+                        <p> ========================== 筛选条件 ========================== </p>
+                        <br>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">主控角色</label>
+                            <div class="layui-input-block">
+                                <select name="lmyy_role">
+                                    <option value="5-3" selected>猪妹</option>
+                                    <option value="7-3">煜明</option>
+                                    <option value="8-3">芙洛拉</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">追踪BOSS方式</label>
+                            <div class="layui-input-block">
+                                <select name="lmyy_trace_boss">
+                                    <option value="0" selected>螺旋飞跃</option>
+                                    <option value="1">飞枪</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
+<script src="layui/layui.js"></script>
+<script src="js/jquery.min.js"></script>
+
+<script src="js/form-options.js"></script>
+<script src="js/update-log.js"></script>
+<script src="js/task-list.js"></script>
+<script src="js/mod-config.js"></script>
+<script src="js/form-cache.js"></script>
+<script src="js/form-main.js"></script>
+
+<script>
+    // 版本号（由 Python 端 config.VERSION 注入，关于脚本处统一显示）
+    function setVersion(v) {
+        var t = document.getElementById('about_title');
+        if (t) { t.textContent = '大鲨鱼助手 ' + v; }
+        var p = document.getElementById('about_version');
+        if (p) { p.textContent = '版本信息：' + v; }
+    }
+</script>
+
+</body>
+</html>
