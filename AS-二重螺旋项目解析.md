@@ -66,7 +66,7 @@ erchong/
 ## 三、启动与数据流
 
 1. `__init__.py`（稳定入口）只调用 `remote_loader.start()`，不直接导入业务任务，确保用户首次导入的启动器可以长期保留。
-2. 加载器从 GitHub `runtime` 分支检查 `dist/latest.json`：云手机优先访问 jsDelivr，GitHub Raw 作为备用；查询参数用于区分设备请求，但不能代替发布后的 jsDelivr 清缓存操作。
+2. 加载器检查 `dist/latest.json`：云手机优先访问阿里云 OSS 直链，GitHub Raw 作为备用；查询参数用于区分设备请求，OSS 直链不依赖缓存清理。
 3. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
 4. 在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
 5. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
@@ -177,16 +177,16 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 版本号在 `res/config.py` 的 `VERSION`，同时要更新 `res/ui/updateLogs.json`（界面"更新日志"页签数据源）。
 - 调试：在 `res/test/test1.py` 的 `test11` 中注释掉 `AppGame` 两行、取消注释对应任务的单跑代码。
 
-### GitHub 远程运行时发布
+### 远程运行时发布（OSS 主源）
 
 - 仓库与分支：`qingushan/as-erchong` 的 `runtime` 分支；匿名下载要求仓库为公开仓库，脚本中禁止保存 GitHub Token 或 SSH 私钥。
-- 下载顺序：清单优先读取 `cdn.jsdelivr.net/gh/...@runtime/`，失败后尝试 GitHub Raw；发布 ZIP 优先读取 `testingcf.jsdelivr.net`、`gcore.jsdelivr.net` 这两个可直出文件的 jsDelivr 节点，再尝试主 jsDelivr 和 Raw。原因是主 jsDelivr 在 ZIP 尚未命中缓存时可能 301 到 Raw，而国内云手机实测 Raw 不可达。
+- 下载顺序：清单和 ZIP 优先读取阿里云 OSS 直链 `https://as-erchong.oss-cn-beijing.aliyuncs.com/`，失败后尝试公开 GitHub Raw。OSS 对象名与仓库 `dist/` 目录保持一致，设备不保存阿里云访问密钥；GitHub 仓库必须公开才能作为匿名备用源。
 - 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；调用时必须使用 `R.sd("AScript/erchong_runtime")` 单个相对路径，当前 Android AScript 实测 `R.sd("AScript", "erchong_runtime")` 会返回两个路径组成的列表而非拼接字符串。`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 启动日志区分三种来源：`已下载并加载远程运行时` 表示本次首次下载该 `release_id`；`已加载已缓存的远程运行时` 表示在线清单正常但设备已有对应缓存，跳过 ZIP 下载；`已加载上次成功缓存的远程运行时` 表示在线检查失败后使用 `active.json` 回退。
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
-- `build_runtime_release.py --purge` 是独立的 CDN 清理模式：只请求 jsDelivr purge 接口，不重新构建、不修改本地文件。必须在 `runtime` 分支已经推送成功后执行，推送前执行会让 CDN 重新缓存旧清单。
+- 远程发布使用 OSS 直链，不需要执行缓存清理。`build_runtime_release.py --purge` 仅保留兼容提示并立即退出，不会发起网络请求；发布时应直接上传 ZIP，再上传 `dist/latest.json`。
 
 #### 标准发布流程
 
@@ -221,21 +221,23 @@ CloudRoleSkillUtil(CloudBaseAction)
    ```
 
    如果 `git status --short` 显示了不应发布的文件，不要直接执行 `git add .`，先使用 `git reset` 取消暂存，再按路径精确执行 `git add`。如果 `git commit` 提示没有变更，说明当前内容已经提交，不要为了触发更新重复生成发布包。
-5. 确认推送成功后，在同一项目根目录执行 CDN 清理：
+5. 确认推送成功后，将构建产物上传到 OSS Bucket：
 
    ```powershell
-   python tools/build_runtime_release.py --purge
+   # 先上传版本化 ZIP，路径必须保留 dist/releases/ 前缀
+   # 再上传清单，覆盖 OSS 中的 dist/latest.json
    ```
 
-   看到 `jsDelivr 清单缓存清理请求已接受` 后，再分别请求 jsDelivr 和 GitHub Raw，确认两者返回同一个新的 `release_id`。如果 jsDelivr 仍返回旧清单，等待几秒后再次检查，不要重复构建同一版本。
+   上传后请求 `https://as-erchong.oss-cn-beijing.aliyuncs.com/dist/latest.json`，确认返回新的 `release_id`；再检查清单中的 ZIP URL 为 HTTP 200 且大小一致。OSS 直链不依赖分支缓存传播。
 6. 让设备重新启动脚本。检查日志出现“已加载远程运行时”，并读取 `/storage/emulated/0/AScript/erchong_runtime/active.json`，确认 `release_id` 和 `sha256` 与 `dist/latest.json` 一致；配置 UI 能正常显示后才算发布完成。
-7. 如果清单下载、ZIP 校验或导入失败，加载器会自动使用设备上一次成功缓存；设备没有缓存时使用工程内置版本。回滚时将 `latest.json` 恢复为上一个已验证包的信息，推送后再次执行 `--purge`。
+7. 如果清单下载、ZIP 校验或导入失败，加载器会自动使用设备上一次成功缓存；设备没有缓存时使用工程内置版本。回滚时将 OSS 中的 `dist/latest.json` 恢复为上一个已验证包的信息，并同步推送 GitHub `runtime` 分支作为备用源。
 
 ## 十一、更新记录（Devin 维护，代码变更时在此追加）
 
 | 日期 | 版本 | 变更摘要 |
 |---|---|---|
-| 2026-08-29 | 待发版 | 新增 GitHub 远程运行时方案：jsDelivr/Raw 双源下载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
+| 2026-08-30 | 待发版 | 远程运行时改用阿里云 OSS 直链作为主源、GitHub Raw 作为备用，移除公共缓存服务依赖；保留大小与 SHA-256 校验、内容寻址缓存及离线回退；同步更新发布目录说明和上传顺序；未修改版本号 |
+| 2026-08-29 | 待发版 | 新增远程运行时加载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
 | 2026-08-28 | 待发版 | 调整活动芙洛拉分组赛战斗节奏：前 30 秒保持循环旋转，满 30 秒后加快重击并停止自动释放 E 和旋转，同时支持每局重置阶段 |
 | 2026-08-26 | 待发版 | 本地游戏将沉浸式戏剧、联袂演绎、活动技能策略迁移到独立控制器；活动芙洛拉开场在放大招前自动对准黄色任务图标；云游戏暂不调整 |
 | 2026-08-22 | 待发版 | 增加委托密函任务与整点刷新执行委托密函互斥校验，冲突配置禁止启动 |

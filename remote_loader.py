@@ -9,7 +9,7 @@
 
 下载包只有在大小、SHA-256、ZIP 路径和必要入口均验证通过，并且 Python 模块
 能够成功导入后，才会写入 ``active.json`` 成为新的活动版本。这样网络中断、
-CDN 旧缓存、下载损坏或发布包结构错误都不会替换设备上最后一个可运行版本。
+远程旧缓存、下载损坏或发布包结构错误都不会替换设备上最后一个可运行版本。
 """
 
 import hashlib
@@ -45,33 +45,20 @@ CACHE_ROOT = R.sd("AScript/erchong_runtime")
 # 把过大的文件写满设备存储。当前完整运行时不足 1 MiB，20 MiB 留有充足余量。
 MAX_PACKAGE_BYTES = 20 * 1024 * 1024
 
-# 国内云手机实测 GitHub Raw 可能无法连接，因此优先使用 jsDelivr；若首选源的
-# 清单或 ZIP 请求失败，再尝试 GitHub Raw。发布后仍需主动清理 latest.json 的
-# jsDelivr 缓存，否则首选源可能暂时返回旧的、但仍合法的清单。
+# 国内云手机优先访问阿里云 OSS 直链，避免公共缓存节点传播延迟导致清单暂时
+# 返回旧版本。OSS 只提供匿名读取，不在设备端保存任何阿里云账号凭据；如果
+# OSS 暂时不可达，再尝试公开 GitHub Raw 作为备用源。
 SOURCE_BASES = (
-    "https://cdn.jsdelivr.net/gh/{repo}@{branch}/".format(
-        repo=REPOSITORY,
-        branch=RELEASE_BRANCH,
-    ),
+    "https://as-erchong.oss-cn-beijing.aliyuncs.com/",
     "https://raw.githubusercontent.com/{repo}/{branch}/".format(
         repo=REPOSITORY,
         branch=RELEASE_BRANCH,
     ),
 )
 
-# jsDelivr 主入口在文件尚未进入边缘缓存时可能 301 跳转到 GitHub Raw；而部分
-# 云手机无法访问 Raw。以下两个 jsDelivr 节点实测会直接返回 ZIP，优先用于发布
-# 包下载；清单仍按 SOURCE_BASES 顺序读取，保持现有 CDN 优先级。
-PACKAGE_SOURCE_BASES = (
-    "https://testingcf.jsdelivr.net/gh/{repo}@{branch}/".format(
-        repo=REPOSITORY,
-        branch=RELEASE_BRANCH,
-    ),
-    "https://gcore.jsdelivr.net/gh/{repo}@{branch}/".format(
-        repo=REPOSITORY,
-        branch=RELEASE_BRANCH,
-    ),
-)
+# ZIP 与清单使用同一组源，并优先从成功提供清单的源下载，避免清单和压缩包
+# 来自不同发布视图。ZIP 文件名包含内容哈希，即使 OSS 保留旧版本也不会混淆。
+PACKAGE_SOURCE_BASES = SOURCE_BASES
 
 
 class RuntimeUpdateError(Exception):
@@ -196,9 +183,9 @@ def _download(url, destination, expected_size=None):
 def _fetch_manifest():
     """按源优先级获取并验证 ``latest.json``。
 
-    查询参数每 5 分钟变化一次，用于区分普通 HTTP 缓存请求；它不能保证刷新
-    jsDelivr 的分支缓存，发布流程仍必须调用官方 purge 地址。某个源请求失败、
-    返回非 2xx、JSON 损坏或清单校验失败时，会记录原因并继续尝试下一个源。
+    查询参数每 5 分钟变化一次，用于区分设备请求并减少中间网络缓存复用。某个
+    源请求失败、返回非 2xx、JSON 损坏或清单校验失败时，会记录原因并继续尝试
+    下一个源；OSS 清单更新不依赖额外清理操作。
     """
     errors = []
     cache_buster = int(time.time() // 300)
@@ -218,7 +205,7 @@ def _fetch_manifest():
 def _download_package(package_path, expected_sha256, expected_size, preferred_base):
     """下载发布 ZIP，并同时验证精确大小和 SHA-256。
 
-    优先从成功提供清单的源下载，保证清单和 ZIP 尽量来自同一 CDN 视图；失败后
+    优先从成功提供清单的源下载，保证清单和 ZIP 尽量来自同一源视图；失败后
     再尝试另一个源。每次重试前删除旧临时文件，所有源都失败时也会清理残留，
     未通过哈希校验的内容绝不会进入 releases 目录。
     """
@@ -226,8 +213,8 @@ def _download_package(package_path, expected_sha256, expected_size, preferred_ba
     temporary_path = os.path.join(CACHE_ROOT, "runtime-download.tmp")
     errors = []
 
-    # 发布包优先使用可直接返回 ZIP 的 jsDelivr 节点，避免主入口在未命中缓存
-    # 时重定向到云手机不可访问的 raw.githubusercontent.com。
+    # 先使用提供清单的源，再尝试其他备用源。每个源都必须通过清单声明的大小
+    # 和 SHA-256 校验，防止清单与压缩包来自不同版本。
     bases = list(PACKAGE_SOURCE_BASES)
     if preferred_base not in bases:
         bases.append(preferred_base)

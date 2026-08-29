@@ -2,7 +2,7 @@
 
 构建结果使用“版本号 + ZIP 内容哈希前 12 位”作为 release_id。只要打包内容相同，
 ZIP 字节和文件名就保持相同；源码、UI 或注释发生变化时会生成新文件名，避免
-GitHub/jsDelivr 把新内容与旧 ZIP 缓存混淆。工具只读取 ``VERSION``，不会替维护者
+OSS 或 GitHub Raw 把新内容与旧 ZIP 混淆。工具只读取 ``VERSION``，不会替维护者
 修改版本号。
 """
 
@@ -12,8 +12,6 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 import sys
-from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
 import zipfile
 
 
@@ -29,14 +27,6 @@ EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 # ZIP 默认记录源文件修改时间，同一份源码在不同电脑上会得到不同哈希。固定成员
 # 时间戳并统一权限，确保相同文件内容生成完全相同的 ZIP 字节。
 ZIP_TIMESTAMP = (2020, 1, 1, 0, 0, 0)
-
-# 清单地址固定不变，jsDelivr 会按 URL 缓存它。该地址只应在 runtime 分支完成
-# git push 后调用；如果在推送前调用，CDN 只会重新缓存旧清单。
-JSDLIVR_PURGE_URL = (
-    "https://purge.jsdelivr.net/gh/qingushan/as-erchong@runtime/"
-    "dist/latest.json"
-)
-
 
 def read_version():
     """使用 AST 安全读取配置中的 VERSION 常量。
@@ -116,44 +106,15 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def purge_jsdelivr_cache():
-    """请求 jsDelivr 删除 runtime 分支的最新清单缓存。
-
-    该动作不会删除 GitHub 文件，也不会修改仓库；它只让 jsDelivr 下一次重新
-    从 GitHub 获取 ``dist/latest.json``。函数单独提供为 ``--purge`` 模式，避免
-    默认构建流程在 git push 之前清理缓存并重新缓存旧内容。
-
-    清理接口返回 HTTP 200 且 JSON 中 ``status`` 为 ``finished`` 或 ``processing``
-    才视为请求已被接受。网络错误和非预期响应会抛出异常，让发布流程明确失败。
-    """
-    request = Request(
-        JSDLIVR_PURGE_URL,
-        headers={"User-Agent": "erchong-runtime-release"},
-    )
-    try:
-        with urlopen(request, timeout=30) as response:
-            if response.status != 200:
-                raise RuntimeError("jsDelivr 清理接口返回 HTTP {}".format(response.status))
-            result = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError) as exc:
-        raise RuntimeError("jsDelivr 清理请求失败：{}".format(exc))
-
-    status = result.get("status") if isinstance(result, dict) else None
-    if status not in ("finished", "processing"):
-        raise RuntimeError("jsDelivr 清理接口返回未知状态：{}".format(status))
-    print("jsDelivr 清单缓存清理请求已接受：{}".format(status))
-    return result
-
-
 def main():
     """生成内容寻址 ZIP，并用其真实哈希和大小覆盖最新发布清单。
 
     ZIP 先写入临时文件，哈希确定后再移动到最终文件名；``latest.json`` 始终指向
     这次完整构建的结果。旧发布 ZIP 不删除，以便清单回滚到已验证版本。
     """
-    # 清理模式不重新构建、不修改本地文件，只用于 git push 完成后的最后一步。
+    # 保留旧参数的兼容提示，避免旧发布脚本误触发重新构建。
     if "--purge" in sys.argv[1:]:
-        purge_jsdelivr_cache()
+        print("--purge 参数已废弃：阿里云 OSS 直链无需执行清理")
         return
 
     version = read_version()
