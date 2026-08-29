@@ -185,14 +185,56 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
-- 发布顺序：先完成代码与 UI 修改并同步本文档/`updateLogs.json` → 运行构建工具 → 检查清单 SHA-256 和 ZIP 内容 → 提交生成文件 → 推送到远程 `runtime` 分支 → 请求 `https://purge.jsdelivr.net/gh/qingushan/as-erchong@runtime/dist/latest.json` 清理清单缓存 → 确认 jsDelivr 返回新 `release_id` → 用设备启动并检查 `active.json` 已切换到新发布标识。
-- 回滚方式：将 `runtime` 分支的 `dist/latest.json` 恢复为上一个已验证发布包的信息并推送；设备下次启动会切换到对应 `release_id`。若网络不可用，则继续使用设备当前缓存。
+- `build_runtime_release.py --purge` 是独立的 CDN 清理模式：只请求 jsDelivr purge 接口，不重新构建、不修改本地文件。必须在 `runtime` 分支已经推送成功后执行，推送前执行会让 CDN 重新缓存旧清单。
+
+#### 标准发布流程
+
+1. 完成 Python、UI、找色资源或其他 `res/` 文件修改，同时更新本文档和 `res/ui/updateLogs.json`；不要在发布工具中自动修改 `res/config.py` 的版本号。
+2. 在项目根目录执行构建：
+
+   ```powershell
+   python tools/build_runtime_release.py
+   ```
+
+   工具会生成内容寻址 ZIP 和 `dist/latest.json`。如果源码内容没有变化，发布包的 `release_id`、文件名和 SHA-256 应保持不变。
+
+3. 检查 `dist/latest.json` 中的 `release_id`、ZIP 路径、文件大小和 SHA-256，并确认 ZIP 包含 `erchong_runtime/runtime_entry.py`、完整 `res/`，且没有 `__pycache__`、`.pyc` 或稳定加载器文件。
+4. 本地验证通过后，使用以下 Git 命令提交构建产物、源码和文档，并推送到远程 `runtime` 分支。当前项目的设备更新源是 `runtime`，`main` 不是更新源；禁止使用 `git push --force`。
+
+   ```powershell
+   # 查看待提交文件，确认没有混入密钥、缓存或无关改动
+   git status --short
+
+   # 暂存本次发布需要的文件；也可以按文件逐个 git add
+   git add .
+
+   # 提交本地发布版本，提交说明按实际改动调整
+   git commit -m "feat: update runtime release"
+
+   # 将当前提交推送到设备使用的 runtime 分支，不覆盖远程 main
+   git push origin HEAD:runtime
+
+   # 核对远程 runtime 的提交是否与本地 HEAD 一致
+   git ls-remote --heads origin runtime
+   git rev-parse HEAD
+   ```
+
+   如果 `git status --short` 显示了不应发布的文件，不要直接执行 `git add .`，先使用 `git reset` 取消暂存，再按路径精确执行 `git add`。如果 `git commit` 提示没有变更，说明当前内容已经提交，不要为了触发更新重复生成发布包。
+5. 确认推送成功后，在同一项目根目录执行 CDN 清理：
+
+   ```powershell
+   python tools/build_runtime_release.py --purge
+   ```
+
+   看到 `jsDelivr 清单缓存清理请求已接受` 后，再分别请求 jsDelivr 和 GitHub Raw，确认两者返回同一个新的 `release_id`。如果 jsDelivr 仍返回旧清单，等待几秒后再次检查，不要重复构建同一版本。
+6. 让设备重新启动脚本。检查日志出现“已加载远程运行时”，并读取 `/storage/emulated/0/AScript/erchong_runtime/active.json`，确认 `release_id` 和 `sha256` 与 `dist/latest.json` 一致；配置 UI 能正常显示后才算发布完成。
+7. 如果清单下载、ZIP 校验或导入失败，加载器会自动使用设备上一次成功缓存；设备没有缓存时使用工程内置版本。回滚时将 `latest.json` 恢复为上一个已验证包的信息，推送后再次执行 `--purge`。
 
 ## 十一、更新记录（Devin 维护，代码变更时在此追加）
 
 | 日期 | 版本 | 变更摘要 |
 |---|---|---|
-| 2026-08-29 | 待发版 | 新增 GitHub 远程运行时方案：jsDelivr/Raw 双源下载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；远程更新相关注释和发布说明统一为中文；未修改版本号 |
+| 2026-08-29 | 待发版 | 新增 GitHub 远程运行时方案：jsDelivr/Raw 双源下载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
 | 2026-08-28 | 待发版 | 调整活动芙洛拉分组赛战斗节奏：前 30 秒保持循环旋转，满 30 秒后加快重击并停止自动释放 E 和旋转，同时支持每局重置阶段 |
 | 2026-08-26 | 待发版 | 本地游戏将沉浸式戏剧、联袂演绎、活动技能策略迁移到独立控制器；活动芙洛拉开场在放大招前自动对准黄色任务图标；云游戏暂不调整 |
 | 2026-08-22 | 待发版 | 增加委托密函任务与整点刷新执行委托密函互斥校验，冲突配置禁止启动 |

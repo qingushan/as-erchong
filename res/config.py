@@ -10,14 +10,17 @@ PROJECT_ROOT = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
 
 
 def resource_path(*child_paths):
+    """返回当前运行时包 ``res`` 目录下资源的绝对路径。"""
     return _os.path.join(PROJECT_ROOT, "res", *child_paths)
 
 
 def ui_resource(*child_paths):
+    """返回当前运行时包 ``res/ui`` 目录下界面资源的绝对路径。"""
     return resource_path("ui", *child_paths)
 
 
 def image_resource(*child_paths):
+    """返回当前运行时包 ``res/img`` 目录下图片资源的绝对路径。"""
     return resource_path("img", *child_paths)
 
 SCREEN_WIDTH = 1280

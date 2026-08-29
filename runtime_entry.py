@@ -10,10 +10,17 @@ from .res.config import VERSION, ui_resource
 from .res.test.test1 import test11
 
 
+# WebWindow 必须由模块级变量持续引用。如果只保存在 start() 的局部变量中，函数
+# 返回后对象可能被 Python 回收，导致配置窗口意外关闭或 tunnel 回调失效。
 form_window = None
 
 
 def tunnel(key, value):
+    """处理配置界面通过 WebWindow 通道发回的事件。
+
+    ``close`` 只记录窗口返回值；``submit`` 会解析完整表单、执行后端互斥校验，
+    再把配置交给正式任务入口。其他未知事件直接忽略，避免误触发游戏任务。
+    """
     print(key, value)
     if key == "close":
         print(value)
@@ -48,7 +55,12 @@ def tunnel(key, value):
 
 
 def start():
-    """显示配置界面，并全局持有窗口对象以防被提前回收。"""
+    """显示配置界面，并全局持有窗口对象以防被提前回收。
+
+    这里通过 ``ui_resource`` 获取当前运行时包中的 HTML：远程运行时会使用远程
+    ZIP 内的 UI，工程内置回退则使用最初导入的 UI。窗口显示后再设置版本文字，
+    给 WebView 留出初始化 JavaScript 的时间。
+    """
     global form_window
 
     print("运行时来源：{}".format(__package__))
