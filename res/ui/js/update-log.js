@@ -11,6 +11,8 @@
 
 // 更新日志缓存。null 表示还没有加载过 updateLogs.json。
 var updateLogsCache = null;
+var updateLogLayer = null;
+var pendingAutomaticUpdateLog = null;
 
 // 简单 HTML 转义，避免日志文本里的特殊字符破坏弹窗结构。
 function escapeHtml(text) {
@@ -46,15 +48,25 @@ function buildLogDetail(data) {
 }
 
 // 打开更新日志弹窗，并绑定左侧版本列表的点击切换。
-function openUpdateLogLayer(layer, updateLogs) {
+function openUpdateLogLayer(layer, updateLogs, preferredVersion) {
     if (!updateLogs || !updateLogs.length) {
         layer.msg('暂无更新日志');
-        return;
+        return false;
+    }
+
+    var selectedIndex = 0;
+    if (preferredVersion) {
+        $.each(updateLogs, function(index, item) {
+            if (item.version === preferredVersion) {
+                selectedIndex = index;
+                return false;
+            }
+        });
     }
 
     var menuHtml = '';
     $.each(updateLogs, function(index, item) {
-        menuHtml += '<div class="log-version-item ' + (index === 0 ? 'active' : '') + '" data-index="' + index + '">' + escapeHtml(item.version) + '</div>';
+        menuHtml += '<div class="log-version-item ' + (index === selectedIndex ? 'active' : '') + '" data-index="' + index + '">' + escapeHtml(item.version) + '</div>';
     });
 
     layer.open({
@@ -65,7 +77,7 @@ function openUpdateLogLayer(layer, updateLogs) {
         content: '<div class="log-container">' +
                 '  <div class="log-left-menu">' + menuHtml + '</div>' +
                 '  <div class="log-right-content" id="log_detail_view">' +
-                buildLogDetail(updateLogs[0]) +
+                buildLogDetail(updateLogs[selectedIndex]) +
                 '  </div>' +
                 '</div>',
         success: function(layero, index) {
@@ -79,23 +91,58 @@ function openUpdateLogLayer(layer, updateLogs) {
             });
         }
     });
+    return true;
+}
+
+// 统一加载日志数据。自动弹窗和“关于脚本”按钮共用缓存与失败提示。
+function loadAndOpenUpdateLog(layer, preferredVersion, opened) {
+    function open(updateLogs) {
+        if (openUpdateLogLayer(layer, updateLogs, preferredVersion) && opened) {
+            opened();
+        }
+    }
+
+    if (updateLogsCache) {
+        open(updateLogsCache);
+        return;
+    }
+
+    $.getJSON('updateLogs.json')
+        .done(function(updateLogs) {
+            updateLogsCache = updateLogs;
+            open(updateLogsCache);
+        })
+        .fail(function() {
+            layer.msg('更新日志加载失败');
+        });
+}
+
+function consumeAutomaticUpdateLog() {
+    if (!updateLogLayer || !pendingAutomaticUpdateLog) {
+        return;
+    }
+
+    var request = pendingAutomaticUpdateLog;
+    pendingAutomaticUpdateLog = null;
+    loadAndOpenUpdateLog(updateLogLayer, request.version, function() {
+        airscript.call('update_log_shown', request.releaseId);
+    });
+}
+
+// Python 可在 WebView 初始化前调用；尚未拿到 layer 时请求会排队到初始化完成。
+function showUpdateLogAutomatically(releaseId, version) {
+    pendingAutomaticUpdateLog = {
+        releaseId: releaseId,
+        version: version
+    };
+    consumeAutomaticUpdateLog();
 }
 
 // 绑定“更新日志”按钮。这个函数由 form-main.js 在 layui 初始化完成后调用。
 function bindUpdateLog(layer) {
+    updateLogLayer = layer;
     $(document).on('click', '#btn_show_logs', function() {
-        if (updateLogsCache) {
-            openUpdateLogLayer(layer, updateLogsCache);
-            return;
-        }
-
-        $.getJSON('updateLogs.json')
-            .done(function(updateLogs) {
-                updateLogsCache = updateLogs;
-                openUpdateLogLayer(layer, updateLogsCache);
-            })
-            .fail(function() {
-                layer.msg('更新日志加载失败');
-            });
+        loadAndOpenUpdateLog(layer);
     });
+    consumeAutomaticUpdateLog();
 }

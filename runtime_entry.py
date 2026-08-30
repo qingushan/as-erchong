@@ -1,9 +1,10 @@
 """工程内置运行时与远程运行时共用的业务入口。"""
 
 import json
+import os
 import time
 
-from ascript.android.system import KeyValue
+from ascript.android.system import KeyValue, R
 from ascript.android.ui import WebWindow
 
 from .res.config import VERSION, ui_resource
@@ -13,6 +14,46 @@ from .res.test.test1 import test11
 # WebWindow 必须由模块级变量持续引用。如果只保存在 start() 的局部变量中，函数
 # 返回后对象可能被 Python 回收，导致配置窗口意外关闭或 tunnel 回调失效。
 form_window = None
+
+# 更新日志展示状态放在在线运行时的稳定缓存目录中，不能放进具体 release_id
+# 目录，否则每次更新后旧状态都会随运行时路径变化而失效。
+UPDATE_LOG_STATE_PATH = os.path.join(
+    R.sd("AScript/erchong_runtime"),
+    "update-log-state.json",
+)
+
+
+def _current_release_id():
+    """返回当前运行时的稳定身份，用于判断是否首次打开这个发布包。"""
+    if __package__ == "erchong_runtime":
+        package_root = os.path.dirname(os.path.abspath(__file__))
+        return os.path.basename(os.path.dirname(package_root))
+    return "bundled-v{}".format(VERSION)
+
+
+def _last_shown_release_id():
+    """读取上次成功展示更新日志的发布标识，损坏状态按未展示处理。"""
+    try:
+        with open(UPDATE_LOG_STATE_PATH, "r", encoding="utf-8") as file_obj:
+            state = json.load(file_obj)
+        release_id = state.get("release_id")
+        return release_id if isinstance(release_id, str) else ""
+    except Exception:
+        return ""
+
+
+def _mark_update_log_shown(release_id):
+    """在前端确认弹窗已打开后，原子记录本次已展示的发布标识。"""
+    os.makedirs(os.path.dirname(UPDATE_LOG_STATE_PATH), exist_ok=True)
+    temporary_path = UPDATE_LOG_STATE_PATH + ".tmp"
+    with open(temporary_path, "w", encoding="utf-8") as file_obj:
+        json.dump(
+            {"release_id": release_id, "app_version": VERSION},
+            file_obj,
+            ensure_ascii=False,
+            indent=2,
+        )
+    os.replace(temporary_path, UPDATE_LOG_STATE_PATH)
 
 
 def tunnel(key, value):
@@ -24,6 +65,18 @@ def tunnel(key, value):
     print(key, value)
     if key == "close":
         print(value)
+        return
+
+    if key == "update_log_shown":
+        current_release_id = _current_release_id()
+        if value != current_release_id:
+            print("忽略非当前版本的更新日志回调：{}".format(value))
+            return
+        try:
+            _mark_update_log_shown(current_release_id)
+        except Exception as exc:
+            # 状态写入失败不影响脚本使用；下次启动会再次尝试展示更新日志。
+            print("记录更新日志展示状态失败：{}".format(exc))
         return
 
     if key != "submit":
@@ -63,6 +116,8 @@ def start():
     """
     global form_window
 
+    release_id = _current_release_id()
+    should_show_update_log = _last_shown_release_id() != release_id
     print("运行时来源：{}".format(__package__))
     print(KeyValue.get("asdata", ""))
     form_window = WebWindow(ui_resource("form.html"), tunnel)
@@ -70,3 +125,10 @@ def start():
     form_window.show()
     time.sleep(1)
     form_window.call("setVersion('v{}')".format(VERSION))
+    if should_show_update_log:
+        form_window.call(
+            "showUpdateLogAutomatically({}, {})".format(
+                json.dumps(release_id),
+                json.dumps("v{}".format(VERSION)),
+            )
+        )

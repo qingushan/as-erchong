@@ -1,7 +1,7 @@
 import os as _os
 
 
-VERSION = "1.0.5.0"
+VERSION = "2.0.0.0"
 
 # 远程运行时会被解压到原 AScript 工程之外，因此资源路径必须以当前运行时包
 # 为基准，不能继续依赖 R.ui/R.res。这样远程下载的 Python 才能与同一发布包
