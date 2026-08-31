@@ -36,6 +36,10 @@ class ActivityCombatController(CombatSkillController):
             "skill_click_max_time": 5, "skill_click_max_count": 1,
             "click_lock_boss_max_time": 99999
         },
+        "9-4-2": {
+            "skill_z_max_time": 10, "skill_z_max_count": 1,
+            "skill_e_max_time": 0.5, "skill_e_max_count": 1,
+        },
     }
 
     def configure(self, skill_type, skill_z_max_time=9999, skill_z_max_count=1):
@@ -120,6 +124,19 @@ class ActivityCombatController(CombatSkillController):
             else:
                 for _ in range(2):
                     self.action_jump_fly()
+        elif self.skill_type in ("9-4-2"):
+            for _ in range(2):
+                self.action_jump_fly()
+                self.sleep(0.5)
+            self.sleep(1)
+
+            self.skill_q(after_sleep=4)
+
+            self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
+            self.sleep(1)
+
+            for _ in range(2):
+                self.action_jump_fly()
 
     def start(self):
         """执行寻敌后的首次准备，并建立活动技能的计时基准。"""
@@ -139,6 +156,8 @@ class ActivityCombatController(CombatSkillController):
             # 以正式进入战斗循环的时间作为 30 秒阶段切换基准；开场连招耗时不计入。
             self.skill_config["combat_start_time"] = now
             self.skill_config["last_time"] = 0
+        elif self.skill_type == "9-4-2":
+            self.lock_enemy()
         self.skill_config["skill_z_last_time"] = 0
 
     def tick(self):
@@ -221,4 +240,8 @@ class ActivityCombatController(CombatSkillController):
             self._cast("skill_click", lambda after_sleep=0: self.combat_left_click(dur=500))
             self._cast_z()
             self.combat_left_click()
+            self.sleep(0.1)
+        elif self.skill_type == "9-4-2":
+            self._cast("skill_e", self.skill_e, after_sleep=0.5)
+            self._cast_z()
             self.sleep(0.1)

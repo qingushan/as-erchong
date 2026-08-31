@@ -2,7 +2,7 @@
 
 > 本文档用于跨会话快速了解本项目。**后续代码有更新时，请同步更新本文档**（尤其是「任务清单」「架构」「更新记录」三节）。
 >
-> 最后同步时间：2026-08-29（版本号由维护者发布时手动调整）
+> 最后同步时间：2026-08-31（版本号由维护者发布时手动调整）
 
 ## 一、项目概述
 
@@ -17,12 +17,15 @@
 ```
 erchong/
 ├── __init__.py            # 稳定入口：只调用 remote_loader.start()
-├── remote_loader.py       # GitHub 远程运行时检查、下载、校验、缓存及回退
+├── remote_loader.py       # 运行模式选择、远程运行时检查、下载、校验、缓存及回退
 ├── runtime_entry.py       # 业务入口：配置窗体 + submit 后调 test1.test11(uiconfig)
+├── mode.json              # 可提交的运行模式配置：remote/local/cache
 ├── build.as               # AS 打包配置：工程名 + pip 依赖(opencv 4.1.2.30/requests/numpy 等)
 ├── tools/
 │   └── build_runtime_release.py # 生成内容寻址运行时 ZIP 与 dist/latest.json
-├── dist/                  # GitHub runtime 分支使用的远程发布清单及发布包
+├── dist/
+│   ├── latest.json        # 当前远程运行时发布清单
+│   └── releases/          # 按 release_id 保存的运行时 ZIP 发布包
 └── res/
     ├── config.py          # 全局配置：VERSION、屏幕尺寸、本地/云游戏按键坐标、技能CD
     ├── font.t             # 点阵字库（OcrX 用）
@@ -60,19 +63,20 @@ erchong/
             ├── form-main.js     # 表单初始化/提交
             ├── task-list.js     # 任务队列增删/排序，JSON 存隐藏域 #input_task_list
             ├── mod-config.js    # 夜航手册(mod)专用配置
-            └── update-log.js    # 更新日志渲染
+            └── update-log.js    # 更新日志渲染及自动更新日志弹窗
 ```
 
 ## 三、启动与数据流
 
 1. `__init__.py`（稳定入口）只调用 `remote_loader.start()`，不直接导入业务任务，确保用户首次导入的启动器可以长期保留。
-2. 加载器检查 `dist/latest.json`：云手机优先访问阿里云 OSS 直链，GitHub Raw 作为备用；查询参数用于区分设备请求，OSS 直链不依赖缓存清理。
-3. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
-4. 在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
-5. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
-6. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
-7. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)` → `AppGame(uiconfig).run()` 进入正式调度。
-8. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
+2. 加载器读取项目根目录 `mode.json` 的 `mode`：缺失或非法时默认为 `remote`；`local` 直接加载工程内置代码，`cache` 只加载活动缓存。
+3. `remote` 模式检查 `dist/latest.json`：云手机优先访问阿里云 OSS 直链，GitHub Raw 作为备用；查询参数用于区分设备请求，OSS 直链不依赖缓存清理。
+4. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
+5. `remote` 模式在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
+6. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
+7. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
+8. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)` → `AppGame(uiconfig).run()` 进入正式调度。
+9. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
 
 ### uiconfig 关键字段
 - `task_list`：JSON 字符串，`[{"type": "mijin"}, ...]`，按顺序执行
@@ -187,6 +191,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
 - 远程发布使用 OSS 直链，不需要执行缓存清理。`build_runtime_release.py --purge` 仅保留兼容提示并立即退出，不会发起网络请求；发布时应直接上传 ZIP，再上传 `dist/latest.json`。
+- 项目根目录的 `mode.json` 纳入 Git，仓库默认设置为 `{"mode": "remote"}`；本地开发时可改为 `local`。正式构建前必须恢复为 `remote`，否则构建工具会拒绝生成发布包。
 
 #### 标准发布流程
 
@@ -236,6 +241,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 
 | 日期 | 版本 | 变更摘要 |
 |---|---|---|
+| 2026-08-31 | 待发版 | 新增项目 `mode.json` 运行模式配置；配置页面改为通过 `ui_ready` 通知 Python 完成加载，再设置版本并自动展示更新日志，修复慢设备上函数未定义的问题；未修改版本号 |
 | 2026-08-30 | 待发版 | 远程运行时改用阿里云 OSS 直链作为主源、GitHub Raw 作为备用，移除公共缓存服务依赖；保留大小与 SHA-256 校验、内容寻址缓存及离线回退；脚本更新后首次打开配置界面自动展示“关于脚本”中的本次更新日志，每个发布包只展示一次；同步更新发布目录说明和上传顺序；未修改版本号 |
 | 2026-08-29 | 待发版 | 新增远程运行时加载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
 | 2026-08-28 | 待发版 | 调整活动芙洛拉分组赛战斗节奏：前 30 秒保持循环旋转，满 30 秒后加快重击并停止自动释放 E 和旋转，同时支持每局重置阶段 |

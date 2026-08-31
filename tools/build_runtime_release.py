@@ -22,6 +22,7 @@ DIST_ROOT = PROJECT_ROOT / "dist"
 RELEASES_ROOT = DIST_ROOT / "releases"
 RUNTIME_PACKAGE = "erchong_runtime"
 INCLUDED_ROOT_FILES = ("runtime_entry.py",)
+MODE_PATH = PROJECT_ROOT / "mode.json"
 EXCLUDED_PARTS = {"__pycache__"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 # ZIP 默认记录源文件修改时间，同一份源码在不同电脑上会得到不同哈希。固定成员
@@ -42,6 +43,21 @@ def read_version():
                 if isinstance(target, ast.Name) and target.id == "VERSION":
                     return ast.literal_eval(node.value)
     raise RuntimeError("未在 res/config.py 中找到 VERSION")
+
+
+def ensure_publish_mode():
+    """只允许在 remote 模式或没有本地模式文件时构建正式发布包。"""
+    if not MODE_PATH.exists():
+        return
+    try:
+        settings = json.loads(MODE_PATH.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise RuntimeError("mode.json 格式错误，无法发布：{}".format(exc))
+    mode = settings.get("mode") if isinstance(settings, dict) else None
+    if mode != "remote":
+        raise RuntimeError(
+            "mode.json 当前为 {}，发布前请改为 remote 或删除该文件".format(mode)
+        )
 
 
 def runtime_files():
@@ -117,6 +133,7 @@ def main():
         print("--purge 参数已废弃：阿里云 OSS 直链无需执行清理")
         return
 
+    ensure_publish_mode()
     version = read_version()
     RELEASES_ROOT.mkdir(parents=True, exist_ok=True)
 

@@ -66,16 +66,12 @@ class AutoGameActivityTask(BaseTask):
         self.game_activity_name = self.uiconfig['game_activity_name']
         self.level_grade = int(self.uiconfig['game_activity_grade'])
         self.level_max_count = int(self.uiconfig['game_activity_max_num'])
-        # self.level_skill_e_time = float(self.uiconfig['game_activity_skill_e_time'])
-        # self.level_skill_e_count = int(self.uiconfig['game_activity_skill_e_count'])
-        # self.level_skill_q_time = float(self.uiconfig['game_activity_skill_q_time'])
-        # self.level_skill_q_count = int(self.uiconfig['game_activity_skill_q_count'])
         self.level_skill_z_time = float(self.uiconfig['game_activity_skill_z_time'])
         self.level_skill_z_count = int(self.uiconfig['game_activity_skill_z_count'])
 
         # 主控角色 + 模式(分组赛/常规) -> 技能模组
         role_base = self.uiconfig['game_activity_role']   # 7-4 / 2-4 / 3-4 / 8-4
-        role_name_map = {"7-4": "煜明", "2-4": "止流", "3-4": "苏乙", "8-4": "芙洛拉"}
+        role_name_map = {"7-4": "煜明", "2-4": "止流", "3-4": "苏乙", "8-4": "芙洛拉", "9-4": "艾达"}
         self.level_role = role_name_map.get(role_base, "自定义")
         # 分组赛(凹分)->-1  常规(纪念币)->-2
         mode = "1" if self.uiconfig['game_activity_get_score'] == 'on' else "2"
@@ -273,8 +269,14 @@ class AutoGameActivityTask(BaseTask):
                 self.click_color_to_color(game_activity_color,"狩月人之阶_挑战完成",game_activity_color,"狩月人之阶_主界面_狩月纪念币",x=753,y=667,out_time=60)
                 self.sleep(1)
 
-            self.click_color_to_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币",common_color,"角色血条-绿色",x=43,y=34,out_time=20)
-            self.sleep(2)
+            self.click_until_ocr(x=43, y=34, rect=[82, 13, 155, 64], pattern="活动")
+            self.sleep(1)
+
+            self.click_until_ocr(x=43, y=34, rect=[119, 277, 344, 385], pattern="商店")
+            self.sleep(1)
+
+        for i in range(3):
+            self.click(778, 684)
 
         res = self.find_my_color(common_color,"角色血条-绿色")
         if res:
@@ -407,15 +409,6 @@ class AutoGameActivityTask(BaseTask):
             self.sleep(0.1)
             self.rotate_view_to_down(400,500,0.5)
             self.rotate_view_to_down_count += 1
-        
-        # for i in range(3):
-        #     self.lock_enemy()
-        #     self.sleep(0.2)
-        
-        # self.combat_left_click(dur=1000*2)
-        # self.sleep(0.1)
-        # self.action_crouch()
-        # self.sleep(0.3)
 
     def refresh_log(self):
         # 刷新日志

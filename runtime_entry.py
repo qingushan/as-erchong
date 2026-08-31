@@ -2,7 +2,6 @@
 
 import json
 import os
-import time
 
 from ascript.android.system import KeyValue, R
 from ascript.android.ui import WebWindow
@@ -14,6 +13,9 @@ from .res.test.test1 import test11
 # WebWindow 必须由模块级变量持续引用。如果只保存在 start() 的局部变量中，函数
 # 返回后对象可能被 Python 回收，导致配置窗口意外关闭或 tunnel 回调失效。
 form_window = None
+form_release_id = ""
+form_should_show_update_log = False
+form_ui_initialized = False
 
 # 更新日志展示状态放在在线运行时的稳定缓存目录中，不能放进具体 release_id
 # 目录，否则每次更新后旧状态都会随运行时路径变化而失效。
@@ -63,6 +65,10 @@ def tunnel(key, value):
     再把配置交给正式任务入口。其他未知事件直接忽略，避免误触发游戏任务。
     """
     print(key, value)
+    if key == "ui_ready":
+        _initialize_form_ui()
+        return
+
     if key == "close":
         print(value)
         return
@@ -107,28 +113,40 @@ def tunnel(key, value):
     test11(uiconfig)
 
 
+def _initialize_form_ui():
+    """在 WebView 主动确认页面加载完成后注入版本并按需展示更新日志。"""
+    global form_ui_initialized
+
+    if form_ui_initialized or form_window is None:
+        return
+
+    form_window.call("setVersion({})".format(json.dumps("v{}".format(VERSION))))
+    if form_should_show_update_log:
+        form_window.call(
+            "showUpdateLogAutomatically({}, {})".format(
+                json.dumps(form_release_id),
+                json.dumps("v{}".format(VERSION)),
+            )
+        )
+    form_ui_initialized = True
+
+
 def start():
     """显示配置界面，并全局持有窗口对象以防被提前回收。
 
     这里通过 ``ui_resource`` 获取当前运行时包中的 HTML：远程运行时会使用远程
-    ZIP 内的 UI，工程内置回退则使用最初导入的 UI。窗口显示后再设置版本文字，
-    给 WebView 留出初始化 JavaScript 的时间。
+    ZIP 内的 UI，工程内置回退则使用最初导入的 UI。WebView 完成加载并发送
+    ``ui_ready`` 后再设置版本文字和更新日志，避免依赖固定等待时间。
     """
-    global form_window
+    global form_release_id, form_should_show_update_log, form_ui_initialized, form_window
 
-    release_id = _current_release_id()
-    should_show_update_log = _last_shown_release_id() != release_id
+    form_release_id = _current_release_id()
+    form_should_show_update_log = (
+        _last_shown_release_id() != form_release_id
+    )
+    form_ui_initialized = False
     print("运行时来源：{}".format(__package__))
     print(KeyValue.get("asdata", ""))
     form_window = WebWindow(ui_resource("form.html"), tunnel)
     form_window.size("80vw", "70vh")
     form_window.show()
-    time.sleep(1)
-    form_window.call("setVersion('v{}')".format(VERSION))
-    if should_show_update_log:
-        form_window.call(
-            "showUpdateLogAutomatically({}, {})".format(
-                json.dumps(release_id),
-                json.dumps("v{}".format(VERSION)),
-            )
-        )

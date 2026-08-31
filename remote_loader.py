@@ -1,11 +1,11 @@
 """AScript 在线更新加载器。
 
-用户首次导入的 AScript 工程会永久保留这个模块。每次启动时，本模块按以下顺序
-选择业务代码：
+用户首次导入的 AScript 工程会永久保留这个模块。每次启动时，本模块先读取外部
+运行模式，再选择业务代码：
 
-1. 从 GitHub 发布分支读取清单，下载并校验对应的运行时 ZIP；
-2. 在线检查失败时，加载设备上一次已经验证成功的远程缓存；
-3. 设备还没有缓存时，加载用户最初导入工程中自带的业务代码。
+1. ``local`` 模式直接加载工程内置代码，供开发测试使用；
+2. ``cache`` 模式只加载设备上一次已经验证成功的远程缓存；
+3. 默认 ``remote`` 模式从远程清单加载，失败时再回退缓存和工程内置代码。
 
 下载包只有在大小、SHA-256、ZIP 路径和必要入口均验证通过，并且 Python 模块
 能够成功导入后，才会写入 ``active.json`` 成为新的活动版本。这样网络中断、
@@ -40,6 +40,14 @@ RUNTIME_PACKAGE = "erchong_runtime"
 # 缓存位于公共存储目录，按 release_id 分目录保存，允许旧版本与新版本共存，
 # 便于断网回退和手动排查。这里不存放 GitHub 账号凭据。
 CACHE_ROOT = R.sd("AScript/erchong_runtime")
+
+# 运行模式配置直接放在稳定启动器所在的项目根目录，方便开发时编辑。文件缺失
+# 时默认为 remote；运行时 ZIP 不包含稳定启动器及这个本地开发配置。
+RUNTIME_MODE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "mode.json",
+)
+RUNTIME_MODES = ("remote", "local", "cache")
 
 # 同时限制清单声明值、HTTP 响应头和实际读取字节数，避免异常服务器或错误地址
 # 把过大的文件写满设备存储。当前完整运行时不足 1 MiB，20 MiB 留有充足余量。
@@ -387,16 +395,30 @@ def _load_cached_runtime():
 
 def _load_bundled_runtime():
     """设备没有可用远程缓存时，加载最初导入工程中自带的业务入口。"""
-    print("远程运行时不可用，使用 AScript 工程内置版本")
+    print("使用 AScript 工程内置版本")
     return importlib.import_module(__package__ + ".runtime_entry")
 
 
-def start():
-    """按照“在线版本 -> 上次缓存 -> 工程内置版本”的顺序启动业务入口。
+def _load_runtime_mode():
+    """读取项目 mode.json；配置缺失、损坏或非法时安全回到 remote。"""
+    if not os.path.isfile(RUNTIME_MODE_PATH):
+        print("未找到 mode.json，使用 remote")
+        return "remote"
+    try:
+        settings = _read_json(RUNTIME_MODE_PATH)
+        mode = settings.get("mode") if isinstance(settings, dict) else None
+        if mode not in RUNTIME_MODES:
+            raise RuntimeUpdateError(
+                "mode 必须是 {} 之一".format(", ".join(RUNTIME_MODES))
+            )
+        return mode
+    except Exception as exc:
+        print("读取运行模式失败，使用 remote：{}".format(exc))
+        return "remote"
 
-    每层都独立捕获异常并输出原因，保证单次网络故障或缓存损坏不会直接导致脚本
-    无法打开。最终选定的运行时统一调用 ``runtime.start()`` 展示配置界面。
-    """
+
+def _load_remote_then_fallback():
+    """按“在线版本 -> 上次缓存 -> 工程内置版本”顺序加载。"""
     runtime = None
     try:
         runtime = _load_remote_runtime()
@@ -411,5 +433,29 @@ def start():
 
     if runtime is None:
         runtime = _load_bundled_runtime()
+    return runtime
 
+
+def start():
+    """按外部运行模式选择业务入口并启动配置界面。
+
+    项目 ``mode.json`` 缺失时默认走 remote；local 模式不会因缓存存在而被覆盖，
+    便于开发者直接验证工程目录中的修改。最终选定的运行时统一调用 ``start``。
+    """
+    mode = _load_runtime_mode()
+    print("运行模式：{}".format(mode))
+
+    if mode == "local":
+        runtime = _load_bundled_runtime()
+    elif mode == "cache":
+        try:
+            runtime = _load_cached_runtime()
+        except Exception as exc:
+            print("缓存运行时加载失败：{}".format(exc))
+            runtime = None
+        if runtime is None:
+            print("没有可用缓存，回退到工程内置版本")
+            runtime = _load_bundled_runtime()
+    else:
+        runtime = _load_remote_then_fallback()
     runtime.start()

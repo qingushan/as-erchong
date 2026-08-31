@@ -1548,6 +1548,7 @@
                                     <option value="2-4">止流</option>
                                     <option value="3-4">苏乙</option>
                                     <option value="8-4">芙洛拉</option>
+                                    <option value="9-4">艾达</option>
                                 </select>
                             </div>
                         </div>
@@ -1788,6 +1789,14 @@
         var p = document.getElementById('about_version');
         if (p) { p.textContent = '版本信息：' + v; }
     }
+
+    // WebWindow.show() 不代表页面脚本已经加载完成；由页面主动通知 Python，
+    // 避免慢设备上过早调用 setVersion 和更新日志函数。
+    window.addEventListener('load', function() {
+        if (window.airscript && typeof airscript.call === 'function') {
+            airscript.call('ui_ready', '');
+        }
+    });
 </script>
 
 </body>
