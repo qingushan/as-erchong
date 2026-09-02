@@ -2,7 +2,7 @@
 
 > 本文档用于跨会话快速了解本项目。**后续代码有更新时，请同步更新本文档**（尤其是「任务清单」「架构」「更新记录」三节）。
 >
-> 最后同步时间：2026-08-31（版本号由维护者发布时手动调整）
+> 最后同步时间：2026-09-02（版本号由维护者发布时手动调整）
 
 ## 一、项目概述
 
@@ -42,13 +42,15 @@ erchong/
     │   ├── AppGame.py     # 总调度器：任务映射、任务线程、看门狗(掉线重连/签到/月卡/定时下线)
     │   └── Auto*Task.py   # 各任务实现（见任务清单）
     ├── cloud_task/        # 云游戏任务（独立的 CloudBaseAction/CloudBaseTask 体系）
+    ├── combat/            # 战斗技能控制器（按本地/云游戏隔离）
+    │   ├── local/
+    │   │   ├── CombatSkillController.py # 普通副本技能 + 共享动作委托/计时/角色展示
+    │   │   ├── CJSXJCombatController.py # 沉浸式戏剧技能策略
+    │   │   ├── LMYYCombatController.py  # 联袂演绎技能策略
+    │   │   └── ActivityCombatController.py # 活动技能策略
+    │   └── cloud/         # 云游戏技能控制器预留包，当前尚未迁移
     ├── util/
-    │   ├── RoleSkillUtil.py      # 通用角色战斗连招库（普通副本/自定义）
-    │   ├── CombatSkillController.py # 本地任务技能控制器基类（动作委托+计时器）
-    │   ├── CJSXJCombatController.py # 沉浸式戏剧技能策略
-    │   ├── LMYYCombatController.py  # 联袂演绎技能策略
-    │   ├── ActivityCombatController.py # 活动技能策略
-    │   └── CloudRoleSkillUtil.py # 云游戏版连招库（暂未拆分）
+    │   └── CloudRoleSkillUtil.py # 云游戏版连招库（暂未迁入 combat/cloud）
     ├── test/
     │   ├── test1.py       # test11(uiconfig)：真实入口，末尾 AppGame(uiconfig).run()
     │   │                  #   （前面大量注释掉的单任务调试代码，调试时取消注释单跑）
@@ -93,8 +95,10 @@ erchong/
 本地游戏：
 BaseGame ──► BaseAction ─┐
 BaseGame ──► BaseFind  ──┴─► BaseTask ──► Auto*Task（各任务）
-RoleSkillUtil(BaseAction)  由 BaseTask 组合持有（self.role_skill_util）
-本地活动技能由各任务组合持有独立 CombatSkillController
+CombatSkillController      由需要战斗技能的普通任务组合持有（self.combat_skill）
+                         ├─► CJSXJCombatController
+                         ├─► LMYYCombatController
+                         └─► ActivityCombatController
 LogUi / MosaicUI           单例悬浮窗，BaseTask 持有 self.logui
 
 云游戏：
@@ -109,7 +113,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 - **BaseTask**：组合动作+识别的通用套路：`click_color_to_color`（点击直到下个界面出现）、`click_until_ocr`、`rotate_view_to_middle_by_color`（转视角把目标转到屏幕中央）、`walk_to_color_disapper`、`ocr_boss`（识别7个boss）、开锁、委托密函执行状态（KeyValue `is_execute_mihan`）、`role_restoration` 角色复位、`go_home`、`go_to_lilian`。
 
 ### 任务类通用结构（Auto*Task）
-每个任务类基本都有：`init_task`（读 uiconfig 参数）→ `go_to_level`（导航到副本入口）→ `select_level_grade`（选难度）→ `go_in_level` → `go_to_activate_level_XX`（按等级分路线走图，XX=等级，A/B/C 为分支路线）→ `combat`（战斗循环，普通任务调 RoleSkillUtil，沉浸式戏剧/联袂演绎/活动调各自控制器）→ `quit_level`/`level_exit` → `refresh_log`（更新悬浮日志）→ `run`（主循环）。
+每个任务类基本都有：`init_task`（读 uiconfig 参数）→ `go_to_level`（导航到副本入口）→ `select_level_grade`（选难度）→ `go_in_level` → `go_to_activate_level_XX`（按等级分路线走图，XX=等级，A/B/C 为分支路线）→ `combat`（战斗循环，普通任务调 `CombatSkillController`，沉浸式戏剧/联袂演绎/活动调各自专用控制器）→ `quit_level`/`level_exit` → `refresh_log`（更新悬浮日志）→ `run`（主循环）。
 
 ## 五、AppGame 调度器（res/task/AppGame.py）
 
@@ -155,16 +159,18 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 云游戏对应 `cloud_color.py`：`cloud_common_color` 等 6 组。
 - **注意**：文件为 UTF-8，键名全是中文；改动时保持 UTF-8 编码。
 
-## 八、角色连招库与任务技能控制器
+## 八、本地战斗技能控制器
 
-- `RoleSkillUtil` 保留普通副本角色和自定义连招，按 `role_type` 编号初始化配置，`combat()` 为统一战斗入口。
-- 沉浸式戏剧、联袂演绎、活动技能已迁移到独立控制器：`CJSXJCombatController`、`LMYYCombatController`、`ActivityCombatController`。
-- 三个控制器通过 `CombatSkillController` 将技能动作委托给任务对象，复用本地 `BaseAction/BaseFind`，并各自维护技能计时器；任务流程调用统一的 `before()`、`start()`、`tick()` 生命周期。
+- 本地技能代码统一位于 `res/combat/local/`。旧 `RoleSkillUtil` 已删除；`BaseTask` 不再无条件创建技能对象，只有实际需要普通技能循环的任务才组合持有 `CombatSkillController(self)`。
+- `CombatSkillController` 同时承担普通副本技能策略和四个控制器共享的基础能力：通过 `__getattr__` 将动作/识别委托给任务对象，统一提供 `_ready`、`_cast`、`_cast_z`、`reset` 等计时方法。
+- 普通控制器保留自定义技能以及赛琪、止流、灾厄武器角色等普通副本模组；沉浸式戏剧、联袂演绎、活动技能分别位于 `CJSXJCombatController`、`LMYYCombatController`、`ActivityCombatController`，不再混入普通控制器。
+- 四个控制器根据 `skill_type` 第一段统一映射并打印角色展示名称，例如 `8-1`、`8-2-2`、`8-4-1` 均显示“芙洛拉”；该名称只用于日志展示，不参与战斗分支判断。
+- 三个专用控制器继承 `CombatSkillController` 的公共能力并各自维护技能状态；活动任务调用 `before()`、`start()`、`tick()`，沉浸式戏剧和联袂演绎调用各自的 `tick()`。
 - 活动芙洛拉（`8-4-1`/`8-4-2`）开场跳跃后，会在释放大招前调用 `rotate_view_to_middle_by_color(common_color, "任务黄色图标")`，把任务目标调整到视野中央。
-- 活动芙洛拉分组赛（`8-4-1`）正式战斗循环前 30 秒保持每轮向右旋转；满 30 秒后切换第二阶段，重击间隔由 2 秒缩短为 0.5 秒、E 技能间隔改为 99999 秒，并从切换当轮起停止旋转；进入下一局时恢复第一阶段参数。
-- 本次仅切换本地游戏任务，云游戏仍使用原 `CloudRoleSkillUtil`，后续单独评估。
-- 支持自定义连招 `set_role_skill_config_custom`（来自 UI 的 `mod_config_list`）、追加魔灵技 `add_skill_z`。
-- 普通副本的特殊角色前置逻辑仍由 `RoleSkillUtil` 管理；活动控制器自行处理活动开场连招和战斗准备。
+- 活动芙洛拉分组赛（`8-4-1`）以正式战斗循环开始时间计时，15 秒后切换第二阶段，重击间隔由 2 秒缩短为 0.8 秒、E 技能间隔改为 99999 秒；当前战斗循环中的自动右转处于关闭状态，进入下一局时恢复第一阶段参数。
+- `res/combat/cloud/` 已预留云游戏控制器包，但本次仅重构本地游戏；云任务仍使用 `res/util/CloudRoleSkillUtil.py`，调用路径和行为均未改变。
+- 支持各任务从 UI 注入自定义连招 `set_role_skill_config_custom`；该方法同时登记魔灵覆盖配置。控制器提供统一的 `apply_skill_z(max_time, max_count)`，并在每次技能模组重建或重置后自动恢复，因此任务层不再保留重复的 `add_moling_skill()` 中转方法。
+- 发布工具会把 `res/combat`、`res/combat/local`、`res/combat/cloud` 作为标准 Python 包写入运行时 ZIP；已有 `__init__.py` 使用源码文件，缺失时才补空文件，避免 ZIP 出现重复成员。
 
 ## 九、本地 vs 云游戏差异
 

@@ -1,4 +1,5 @@
 from ...res.task.BaseTask import BaseTask
+from ...res.combat.local.CombatSkillController import CombatSkillController
 from ...res.assets.color import *
 
 from ascript.android import system
@@ -10,6 +11,7 @@ class AutoZEWeaponTask(BaseTask):
     # 灾厄武器
     def __init__(self, uiconfig=None):
         super().__init__()
+        self.combat_skill = CombatSkillController(self)
 
         self.uiconfig = uiconfig
 
@@ -38,7 +40,7 @@ class AutoZEWeaponTask(BaseTask):
             if skill_model == "8-2":
                 skill_model = "8-2-2"
 
-        self.role_skill_util.init_config(skill_model)
+        self.combat_skill.init_config(skill_model)
 
     def rotate_view_to_middle_by_color(self, color_dict, color_name):
         # 根据颜色旋转视角至中间
@@ -169,7 +171,7 @@ class AutoZEWeaponTask(BaseTask):
                     break
 
         # 重置技能时间
-        self.role_skill_util.set_role_skill_config()
+        self.combat_skill.set_role_skill_config()
 
         print("成功进入副本")
         return True
@@ -400,7 +402,7 @@ class AutoZEWeaponTask(BaseTask):
                 self.await_until_color(color_dict=common_color, color_name="角色血条-绿色",time_out=9)
 
                 # 重置技能时间
-                self.role_skill_util.set_role_skill_config()
+                self.combat_skill.set_role_skill_config()
 
             if self.level_type == 2:
                 # 单人模式
@@ -448,7 +450,7 @@ class AutoZEWeaponTask(BaseTask):
                     self.refresh_log()
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 
@@ -491,7 +493,7 @@ class AutoZEWeaponTask(BaseTask):
                 self.await_until_color(color_dict=common_color, color_name="角色血条-绿色",time_out=9)
 
                 # 重置技能时间
-                self.role_skill_util.set_role_skill_config()
+                self.combat_skill.set_role_skill_config()
 
             if self.level_type == 2:
                 # 单人模式
@@ -539,7 +541,7 @@ class AutoZEWeaponTask(BaseTask):
                     self.refresh_log()
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 

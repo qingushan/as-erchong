@@ -1,11 +1,12 @@
 from ...res.task.BaseTask import BaseTask
-from ...res.util.RoleSkillUtil import RoleSkillUtil
+from ...res.combat.local.CombatSkillController import CombatSkillController
 from ...res.assets.color import *
 
 class AutoRoleExpTask(BaseTask):
     # 角色经验
     def __init__(self,uiconfig=None):
         super().__init__()
+        self.combat_skill = CombatSkillController(self)
 
         self.uiconfig = uiconfig
 
@@ -34,17 +35,7 @@ class AutoRoleExpTask(BaseTask):
 
     def set_skill_config(self):
         # 初始化技能配置
-        self.role_skill_util.init_config(self.uiconfig.get('role_exp_role_skill', '0'))
-
-    def add_moling_skill(self):
-        """
-        添加魔灵技能
-        """
-        skill_config = {
-            "skill_z_max_time": float(self.uiconfig.get('role_tupo_skill_z_time', 30)),
-            "skill_z_max_count": int(self.uiconfig.get('role_tupo_skill_z_count', 1))
-        }
-        self.role_skill_util.add_skill_z(skill_config)
+        self.combat_skill.init_config(self.uiconfig.get('role_exp_role_skill', '0'))
 
     def rotate_view_to_middle_by_color(self, color_dict, color_name):
         # 根据颜色旋转视角至中间
@@ -88,7 +79,7 @@ class AutoRoleExpTask(BaseTask):
             "skill_z_max_time": float(self.uiconfig.get('role_exp_skill_z_time', 30)),
             "skill_z_max_count": int(self.uiconfig.get('role_exp_skill_z_count', 1)),
         }
-        self.role_skill_util.set_role_skill_config_custom(skill_config)
+        self.combat_skill.set_role_skill_config_custom(skill_config)
 
         self.level_more_award = int(self.uiconfig['role_exp_level_more_award'])
         str_ = self.uiconfig['role_exp_level_more_award_boci']
@@ -164,10 +155,7 @@ class AutoRoleExpTask(BaseTask):
         self.sleep(2)
 
         # 重置技能时间
-        self.role_skill_util.set_role_skill_config()
-
-        # 添加魔灵技能
-        self.add_moling_skill()
+        self.combat_skill.set_role_skill_config()
 
         print("成功进入副本")
 
@@ -582,7 +570,7 @@ class AutoRoleExpTask(BaseTask):
                     return True
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 

@@ -11,7 +11,10 @@ class CJSXJCombatController(CombatSkillController):
 
     def configure(self, role_type="0", custom_config=None):
         """根据角色选择内置配置或读取沉浸式戏剧的自定义配置。"""
+        custom_config = custom_config or {}
         self.role_type = role_type
+        self.skill_type = role_type
+        self.role = self.get_role_name(role_type)
         if role_type == "8-1":
             self.skill_config = {
                 "skill_q_max_time": 99999, "skill_e_max_time": 1, "skill_e_max_count": 1,
@@ -19,7 +22,6 @@ class CJSXJCombatController(CombatSkillController):
                 "skill_click_max_count": 1, "click_lock_boss_max_time": 1,
             }
         else:
-            custom_config = custom_config or {}
             self.skill_config = {
                 "skill_q_max_time": float(custom_config.get("skill_q_max_time", -1)),
                 "skill_q_max_count": int(custom_config.get("skill_q_max_count", 1)),
@@ -28,13 +30,12 @@ class CJSXJCombatController(CombatSkillController):
                 "skill_z_max_time": float(custom_config.get("skill_z_max_time", -1)),
                 "skill_z_max_count": int(custom_config.get("skill_z_max_count", 1)),
             }
+        self.apply_skill_z(
+            custom_config.get("skill_z_max_time", -1),
+            custom_config.get("skill_z_max_count", 1),
+        )
         self.reset()
-
-    def add_skill_z(self, max_time, max_count):
-        """应用任务页面的魔灵间隔；每次进入副本前由任务重新调用。"""
-        self.skill_config["skill_z_max_time"] = float(max_time)
-        self.skill_config["skill_z_max_count"] = int(max_count)
-        self.skill_config["skill_z_last_time"] = 0
+        self.print_skill_info()
 
     def reset(self):
         """只清理运行时计时，保留用户设置的技能间隔和释放次数。"""

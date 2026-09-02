@@ -1,6 +1,6 @@
 from ...res.task.BaseTask import BaseTask
 from ...res.assets.color import *
-from ...res.util.ActivityCombatController import ActivityCombatController
+from ...res.combat.local.ActivityCombatController import ActivityCombatController
 import re
 
 class AutoGameActivityTask(BaseTask):
@@ -13,7 +13,6 @@ class AutoGameActivityTask(BaseTask):
         self.task_name = '活动'
         self.game_activity_name = '狩月人之阶'
 
-        self.level_role = '自定义' # 主控角色
         self.level_max_score = 0 # 最高分
 
         self.level_max_count = 2 # 最大探索次数
@@ -71,8 +70,6 @@ class AutoGameActivityTask(BaseTask):
 
         # 主控角色 + 模式(分组赛/常规) -> 技能模组
         role_base = self.uiconfig['game_activity_role']   # 7-4 / 2-4 / 3-4 / 8-4
-        role_name_map = {"7-4": "煜明", "2-4": "止流", "3-4": "苏乙", "8-4": "芙洛拉", "9-4": "艾达"}
-        self.level_role = role_name_map.get(role_base, "自定义")
         # 分组赛(凹分)->-1  常规(纪念币)->-2
         mode = "1" if self.uiconfig['game_activity_get_score'] == 'on' else "2"
         self.skill_type = f"{role_base}-{mode}"
@@ -80,17 +77,6 @@ class AutoGameActivityTask(BaseTask):
         # 角色和模式决定策略，魔灵参数由活动页面覆盖到同一份配置中。
         self.activity_combat.configure(
             self.skill_type, self.level_skill_z_time, self.level_skill_z_count)
-
-        print(f"主控角色：{self.level_role}  技能模组：{self.skill_type}")
-
-    def apply_skill_z(self):
-        # 将活动魔灵配置应用到技能模组
-        skill_config = {
-            "skill_z_max_time": self.level_skill_z_time,
-            "skill_z_max_count": self.level_skill_z_count,
-        }
-        self.activity_combat.skill_config["skill_z_max_time"] = float(skill_config["skill_z_max_time"])
-        self.activity_combat.skill_config["skill_z_max_count"] = int(skill_config["skill_z_max_count"])
 
     def level_qiju(self):
         # 棋局
@@ -130,7 +116,6 @@ class AutoGameActivityTask(BaseTask):
         # 重置技能模组配置
         # 每次进本重新开始冷却计时，保留当前活动模式和魔灵设置。
         self.activity_combat.reset()
-        self.apply_skill_z()
 
     def go_to_level(self):
         # 前往副本

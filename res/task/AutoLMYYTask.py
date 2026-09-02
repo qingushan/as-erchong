@@ -1,6 +1,6 @@
 from ...res.task.BaseTask import BaseTask
 from ...res.assets.color import *
-from ...res.util.LMYYCombatController import LMYYCombatController
+from ...res.combat.local.LMYYCombatController import LMYYCombatController
 
 from ascript.android import system
 
@@ -35,7 +35,7 @@ class AutoLMYYTask(BaseTask):
         self.level_ok_count = 0  # 探索成功次数
         self.level_faile_count = 0  # 探索失败次数
 
-        # 联袂演绎有独立的角色/模式连招和追踪参数，不再写入通用 RoleSkillUtil。
+        # 联袂演绎单独维护角色连招和追踪参数，避免影响普通副本控制器。
         self.lmyy_combat = LMYYCombatController(self)
         self.set_skill_config()
 

@@ -1,11 +1,12 @@
 from ...res.task.BaseTask import BaseTask
-from ...res.util.RoleSkillUtil import RoleSkillUtil
+from ...res.combat.local.CombatSkillController import CombatSkillController
 from ...res.assets.color import *
 
 class AutoJjbTask(BaseTask):
     # 皎皎币
     def __init__(self,uiconfig=None):
         super().__init__()
+        self.combat_skill = CombatSkillController(self)
 
         self.uiconfig = uiconfig
 
@@ -52,7 +53,7 @@ class AutoJjbTask(BaseTask):
 
     def set_skill_config(self):
         # 初始化技能配置
-        self.role_skill_util.init_config(self.uiconfig['jjb_role_skill'])
+        self.combat_skill.init_config(self.uiconfig['jjb_role_skill'])
 
     def init_jjb(self):
         # 初始化
@@ -82,20 +83,10 @@ class AutoJjbTask(BaseTask):
             "skill_z_max_time": float(self.uiconfig['jjb_skill_z_time']),
             "skill_z_max_count": int(self.uiconfig['jjb_skill_z_count']),
         }
-        self.role_skill_util.set_role_skill_config_custom(skill_config)
+        self.combat_skill.set_role_skill_config_custom(skill_config)
 
         print(f"当前委托手册:{self.level_more_award}")
         print(f"使用委托手册的轮次:{self.level_more_award_boci}")
-
-    def add_moling_skill(self):
-        """
-        添加魔灵技能
-        """
-        skill_config = {
-            "skill_z_max_time": float(self.uiconfig.get('jjb_skill_z_time', 30)),
-            "skill_z_max_count": int(self.uiconfig.get('jjb_skill_z_count', 1))
-        }
-        self.role_skill_util.add_skill_z(skill_config)
 
     def check_use_level_more_award(self):
         # 检查当前轮次是否需要使用委托手册
@@ -154,10 +145,7 @@ class AutoJjbTask(BaseTask):
         self.sleep(2)
 
         # 重置技能时间
-        self.role_skill_util.set_role_skill_config()
-
-        # 添加魔灵技能
-        self.add_moling_skill()
+        self.combat_skill.set_role_skill_config()
 
         print("成功进入副本")
 
@@ -796,7 +784,7 @@ class AutoJjbTask(BaseTask):
                     now_boci += 1
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 

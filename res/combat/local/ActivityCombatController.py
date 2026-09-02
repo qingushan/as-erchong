@@ -1,5 +1,5 @@
 from .CombatSkillController import CombatSkillController
-from ..assets.color import common_color
+from ...assets.color import common_color
 
 
 class ActivityCombatController(CombatSkillController):
@@ -45,12 +45,11 @@ class ActivityCombatController(CombatSkillController):
     def configure(self, skill_type, skill_z_max_time=9999, skill_z_max_count=1):
         """加载活动角色/模式配置，并应用 UI 传入的魔灵参数。"""
         self.skill_type = skill_type
+        self.role = self.get_role_name(skill_type)
         self.skill_config = dict(self.CONFIGS.get(skill_type, {}))
-        self.skill_config.update({
-            "skill_z_max_time": float(skill_z_max_time),
-            "skill_z_max_count": int(skill_z_max_count),
-        })
+        self.apply_skill_z(skill_z_max_time, skill_z_max_count)
         self.reset()
+        self.print_skill_info()
 
     def reset(self):
         """重置进入副本后的计时器和分组赛连招索引。"""
@@ -74,7 +73,7 @@ class ActivityCombatController(CombatSkillController):
             self.skill_config["combat_start_time"] = 0
 
     def before(self):
-        """执行寻敌前的开场连招，对应原 RoleSkillUtil.combat_before。"""
+        """执行进入副本后、寻敌前的活动开场连招。"""
         if self.skill_type in ("7-4-1", "7-4-2"):
             self.skill_q(after_sleep=3)
         elif self.skill_type in ("2-4-1", "2-4-2"):
@@ -153,7 +152,7 @@ class ActivityCombatController(CombatSkillController):
             self.skill_config["last_time"] = now
             self.skill_config["skill_last_time"] = now
         elif self.skill_type == "8-4-1":
-            # 以正式进入战斗循环的时间作为 30 秒阶段切换基准；开场连招耗时不计入。
+            # 以正式进入战斗循环的时间作为 15 秒阶段切换基准；开场连招耗时不计入。
             self.skill_config["combat_start_time"] = now
             self.skill_config["last_time"] = 0
         elif self.skill_type == "9-4-2":
@@ -213,16 +212,17 @@ class ActivityCombatController(CombatSkillController):
             self.sleep(0.1)
         elif self.skill_type == "8-4-1":
             # 第二阶段只切换一次。将 E 间隔设为极大值等价于停止自动释放 E，
-            # 同时把重击间隔从 2 秒缩短到 0.5 秒。
+            # 同时把重击间隔从 2 秒缩短到 0.8 秒。
             if (not self.skill_config["phase_switched"] and
                     self.time() - self.skill_config["combat_start_time"] >=
                     self.skill_config["phase_switch_time"]):
                 self.skill_config["max_time"] = 0.8
                 self.skill_config["skill_e_max_time"] = 99999
                 self.skill_config["phase_switched"] = True
-                print("芙洛拉分组赛进入第二阶段：重击间隔0.5秒，停止自动释放E技能")
+                print("芙洛拉分组赛进入第二阶段：重击间隔0.8秒，停止自动释放E技能")
 
-            # 第一阶段持续向右调整视角；满 30 秒切换第二阶段后立即停止旋转。
+            # 当前关闭战斗循环中的自动右转，开场阶段只使用任务黄色图标校正方向。
+            # 后续如需恢复第一阶段右转，应仅在 phase_switched 为 False 时执行。
             # if not self.skill_config["phase_switched"]:
             #     self.rotate_view_to_right(250, dur=100, after_sleep=0.1)
 

@@ -1,5 +1,5 @@
 from ...res.task.BaseTask import BaseTask
-from ...res.util.CJSXJCombatController import CJSXJCombatController
+from ...res.combat.local.CJSXJCombatController import CJSXJCombatController
 from ...res.assets.color import *
 import re
 
@@ -39,7 +39,7 @@ class AutoCJSXJTask(BaseTask):
         self.boss_dodge_to_w_last_time = 0  # 最后一次释放技能时间
 
         self.set_skill_config()
-        # 沉浸式戏剧的技能状态独立于通用 RoleSkillUtil，避免 BOSS 特殊逻辑相互污染。
+        # 沉浸式戏剧单独维护 BOSS 战技能状态，避免影响普通副本控制器。
         self.cjsxj_combat = CJSXJCombatController(self)
 
     def set_skill_config(self):
@@ -98,17 +98,6 @@ class AutoCJSXJTask(BaseTask):
         # reset 不重建配置，确保用户设置的间隔和次数跨关卡保持一致。
         self.cjsxj_combat.reset()
 
-    def add_moling_skill(self):
-        """
-        添加魔灵技能
-        """
-        skill_config = {
-            "skill_z_max_time": float(self.uiconfig.get('cjsxj_skill_z_time', 30)),
-            "skill_z_max_count": int(self.uiconfig.get('cjsxj_skill_z_count', 1))
-        }
-        self.cjsxj_combat.add_skill_z(
-            skill_config["skill_z_max_time"], skill_config["skill_z_max_count"])
-
     def go_to_level(self):
         # 前往副本
         print("开始前往沉浸式戏剧")
@@ -128,9 +117,6 @@ class AutoCJSXJTask(BaseTask):
         self.boss = None
 
         self.init_skill_time()
-
-        # 添加魔灵技能
-        self.add_moling_skill()
 
         print(f"开始进入副本---")
         res = self.find_my_color(cjsxj_color,"挑战完成-下一层")

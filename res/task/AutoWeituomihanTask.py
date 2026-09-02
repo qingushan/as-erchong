@@ -1,5 +1,5 @@
 from ...res.task.BaseTask import BaseTask
-from ...res.util.RoleSkillUtil import RoleSkillUtil
+from ...res.combat.local.CombatSkillController import CombatSkillController
 from ...res.assets.color import *
 import datetime
 import re
@@ -10,6 +10,7 @@ class AutoWeituomihanTask(BaseTask):
     # 委托密函
     def __init__(self,uiconfig=None):
         super().__init__()
+        self.combat_skill = CombatSkillController(self)
 
         self.uiconfig = uiconfig
 
@@ -43,7 +44,7 @@ class AutoWeituomihanTask(BaseTask):
 
     def set_skill_config(self):
         # 初始化技能配置
-        self.role_skill_util.init_config(self.uiconfig.get('mihan_role_skill', '0'))
+        self.combat_skill.init_config(self.uiconfig.get('mihan_role_skill', '0'))
 
     def rotate_view_to_middle_by_color(self, color_dict, color_name):
         # 根据颜色旋转视角至中间
@@ -84,7 +85,7 @@ class AutoWeituomihanTask(BaseTask):
             "skill_z_max_time": float(self.uiconfig.get('mihan_skill_z_time', 30)),
             "skill_z_max_count": int(self.uiconfig.get('mihan_skill_z_count', 1)),
         }
-        self.role_skill_util.set_role_skill_config_custom(skill_config)
+        self.combat_skill.set_role_skill_config_custom(skill_config)
 
         if self.uiconfig['mihan_level_type_quli'] == "on":
             self.level_types.append("驱离")
@@ -116,16 +117,6 @@ class AutoWeituomihanTask(BaseTask):
         self.task_time = t.hour
         print(f"当前任务时间点：{self.task_time}")
         print(f"当前支持执行的任务类型：{self.level_types}")
-
-    def add_moling_skill(self):
-        """
-        添加魔灵技能
-        """
-        skill_config = {
-            "skill_z_max_time": float(self.uiconfig.get('mihan_skill_z_time', 30)),
-            "skill_z_max_count": int(self.uiconfig.get('mihan_skill_z_count', 1))
-        }
-        self.role_skill_util.add_skill_z(skill_config)
 
     def init_task_level(self):
         # 委托密函每个类型初始化
@@ -259,10 +250,7 @@ class AutoWeituomihanTask(BaseTask):
         self.sleep(2)
 
         # 重置技能时间
-        self.role_skill_util.set_role_skill_config()
-
-        # 添加魔灵技能
-        self.add_moling_skill()
+        self.combat_skill.set_role_skill_config()
 
         print("成功进入副本")
         return True
@@ -746,7 +734,7 @@ class AutoWeituomihanTask(BaseTask):
                 self.refresh_log()
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 
@@ -781,7 +769,7 @@ class AutoWeituomihanTask(BaseTask):
                         return True
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 
@@ -842,7 +830,7 @@ class AutoWeituomihanTask(BaseTask):
 
             if r2:
                 # 释放技能
-                self.role_skill_util.combat()
+                self.combat_skill.combat()
 
             self.sleep(0.1)
 
@@ -896,7 +884,7 @@ class AutoWeituomihanTask(BaseTask):
                 self.refresh_log()
 
             # 释放技能
-            self.role_skill_util.combat()
+            self.combat_skill.combat()
 
             self.sleep(0.1)
 

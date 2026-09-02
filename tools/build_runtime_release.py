@@ -92,24 +92,32 @@ def write_runtime_zip(destination):
     """把业务代码和资源写入目标 ZIP。
 
     AScript 工程源码目录未必都带 ``__init__.py``，远程运行时却需要作为标准 Python
-    包动态导入，因此构建时为各级代码目录补充空的包标记文件。
+    包动态导入，因此构建时为缺少包标记的代码目录补充空文件。源码中已经存在的
+    ``__init__.py`` 直接使用原文件，避免同一路径在 ZIP 中重复写入。
     """
     package_directories = {
         Path(RUNTIME_PACKAGE),
         Path(RUNTIME_PACKAGE) / "res",
         Path(RUNTIME_PACKAGE) / "res" / "assets",
         Path(RUNTIME_PACKAGE) / "res" / "cloud_task",
+        Path(RUNTIME_PACKAGE) / "res" / "combat",
+        Path(RUNTIME_PACKAGE) / "res" / "combat" / "cloud",
+        Path(RUNTIME_PACKAGE) / "res" / "combat" / "local",
         Path(RUNTIME_PACKAGE) / "res" / "task",
         Path(RUNTIME_PACKAGE) / "res" / "test",
         Path(RUNTIME_PACKAGE) / "res" / "ui",
         Path(RUNTIME_PACKAGE) / "res" / "util",
     }
 
+    files = list(runtime_files())
+    archive_paths = {archive_path for _, archive_path in files}
+
     with zipfile.ZipFile(destination, "w") as archive:
         for directory in sorted(package_directories):
             init_path = directory / "__init__.py"
-            archive.writestr(zip_info(init_path), b"")
-        for source_path, archive_path in runtime_files():
+            if init_path not in archive_paths:
+                archive.writestr(zip_info(init_path), b"")
+        for source_path, archive_path in files:
             archive.writestr(zip_info(archive_path), source_path.read_bytes())
 
 

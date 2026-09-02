@@ -1,6 +1,5 @@
 from ...res.task.BaseAction import BaseAction
 from ...res.task.BaseFind import BaseFind
-from ...res.util.RoleSkillUtil import RoleSkillUtil
 from ...res.task.LogUi import LogUi,MosaicUI
 from ...res.assets.color import mijin_color, common_color
 
@@ -17,7 +16,6 @@ class BaseTask(BaseAction, BaseFind):
     def __init__(self):
         super().__init__()
         self.logui = LogUi()
-        self.role_skill_util = RoleSkillUtil()
 
     def rotate_view_to_close_by_ori(self, ori,rotate_x=10):
         # 根据目标方位旋转视角, 使视角靠近目标

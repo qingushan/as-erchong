@@ -12,6 +12,7 @@ class LMYYCombatController(CombatSkillController):
     def configure(self, skill_type, trace_boss="0"):
         """加载角色连招和追踪 BOSS 方式，并初始化本轮计时器。"""
         self.skill_type = skill_type
+        self.role = self.get_role_name(skill_type)
         self.trace_boss = trace_boss
         self.skill_config = {
             "5-3": {"skill_e_max_time": 0, "skill_e_max_count": 1,
@@ -27,6 +28,7 @@ class LMYYCombatController(CombatSkillController):
         }.get(skill_type, {})
         self.skill_config["lmyy_trace_boss"] = trace_boss
         self.reset()
+        self.print_skill_info()
 
     def reset(self):
         """进入新副本时清零冷却；芙洛拉重击仍保留原来的 3 秒延迟。"""
@@ -36,12 +38,6 @@ class LMYYCombatController(CombatSkillController):
                 self.skill_config[key] = now if key == "skill_click_last_time" and self.skill_type == "8-3" else 0
         if self.skill_type == "8-3":
             self.skill_config["skill_click_last_time"] = now + 3
-
-    def add_skill_z(self, max_time, max_count):
-        """覆盖活动页面配置的魔灵冷却和单次释放次数。"""
-        self.skill_config["skill_z_max_time"] = float(max_time)
-        self.skill_config["skill_z_max_count"] = int(max_count)
-        self.skill_config["skill_z_last_time"] = 0
 
     def tick(self):
         """执行一次联袂演绎战斗循环，不负责判断副本是否结束。"""
