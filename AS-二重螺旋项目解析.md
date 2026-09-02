@@ -183,14 +183,14 @@ CloudRoleSkillUtil(CloudBaseAction)
 
 ### 远程运行时发布（OSS 主源）
 
-- 仓库与分支：`qingushan/as-erchong` 的 `runtime` 分支；匿名下载要求仓库为公开仓库，脚本中禁止保存 GitHub Token 或 SSH 私钥。
+- 仓库与分支：`main` 是日常开发和正式发布分支，`runtime` 仅用于在线更新测试及已验证版本备份。当前设备主更新源为 OSS；匿名备用下载要求 GitHub 仓库公开，脚本中禁止保存 GitHub Token 或 SSH 私钥。
 - 下载顺序：清单和 ZIP 优先读取阿里云 OSS 直链 `https://as-erchong.oss-cn-beijing.aliyuncs.com/`，失败后尝试公开 GitHub Raw。OSS 对象名与仓库 `dist/` 目录保持一致，设备不保存阿里云访问密钥；GitHub 仓库必须公开才能作为匿名备用源。
 - 缓存目录：`/storage/emulated/0/AScript/erchong_runtime`；调用时必须使用 `R.sd("AScript/erchong_runtime")` 单个相对路径，当前 Android AScript 实测 `R.sd("AScript", "erchong_runtime")` 会返回两个路径组成的列表而非拼接字符串。`active.json` 仅在远程包解压且 Python 导入成功后更新，因此坏包不会替换当前可用缓存。
 - 完整性保护：清单限制 ZIP 不超过 20 MiB，并记录精确字节数和 SHA-256；加载器防止 ZIP 路径穿越。SHA-256 用于发现传输/缓存损坏，不等同于独立数字签名，GitHub 仓库写权限仍需严格保护并开启 2FA。
 - 启动日志区分三种来源：`已下载并加载远程运行时` 表示本次首次下载该 `release_id`；`已加载已缓存的远程运行时` 表示在线清单正常但设备已有对应缓存，跳过 ZIP 下载；`已加载上次成功缓存的远程运行时` 表示在线检查失败后使用 `active.json` 回退。
 - 资源边界：运行时 ZIP 包含 `runtime_entry.py` 与整个 `res/`（Python、HTML、JS、CSS、JSON、字库和图片）；稳定启动器 `__init__.py`、`remote_loader.py` 和 `build.as` 不放进远程包。
 - 发布命令：`python tools/build_runtime_release.py`。工具读取当前 `VERSION` 但不修改它，生成 `dist/releases/erchong-runtime-v版本-内容哈希.zip` 和 `dist/latest.json`。
-- 远程发布使用 OSS 直链，不需要执行缓存清理。`build_runtime_release.py --purge` 仅保留兼容提示并立即退出，不会发起网络请求；发布时应直接上传 ZIP，再上传 `dist/latest.json`。
+- 远程发布使用 OSS 直链，不需要执行缓存清理。`build_runtime_release.py --purge` 仅保留兼容提示并立即退出，不会发起网络请求；发布时应直接上传 ZIP，再上传 `dist/latest.json`。GitHub Raw 备用地址目前仍指向 `runtime`，如需改为 `main`，必须先修改 `remote_loader.py` 中的 `RELEASE_BRANCH` 并重新发布。
 - 项目根目录的 `mode.json` 纳入 Git，仓库默认设置为 `{"mode": "remote"}`；本地开发时可改为 `local`。正式构建前必须恢复为 `remote`，否则构建工具会拒绝生成发布包。
 
 #### 标准发布流程
@@ -205,7 +205,7 @@ CloudRoleSkillUtil(CloudBaseAction)
    工具会生成内容寻址 ZIP 和 `dist/latest.json`。如果源码内容没有变化，发布包的 `release_id`、文件名和 SHA-256 应保持不变。
 
 3. 检查 `dist/latest.json` 中的 `release_id`、ZIP 路径、文件大小和 SHA-256，并确认 ZIP 包含 `erchong_runtime/runtime_entry.py`、完整 `res/`，且没有 `__pycache__`、`.pyc` 或稳定加载器文件。
-4. 本地验证通过后，使用以下 Git 命令提交构建产物、源码和文档，并推送到远程 `runtime` 分支。当前项目的设备更新源是 `runtime`，`main` 不是更新源；禁止使用 `git push --force`。
+4. 本地验证通过后，使用以下 Git 命令提交构建产物、源码和文档，并推送到远程 `main` 分支。`runtime` 仅在需要单独测试在线更新时使用；禁止使用 `git push --force`。
 
    ```powershell
    # 查看待提交文件，确认没有混入密钥、缓存或无关改动
@@ -217,11 +217,11 @@ CloudRoleSkillUtil(CloudBaseAction)
    # 提交本地发布版本，提交说明按实际改动调整
    git commit -m "feat: update runtime release"
 
-   # 将当前提交推送到设备使用的 runtime 分支，不覆盖远程 main
-   git push origin HEAD:runtime
+   # 将当前提交推送到日常开发和正式发布使用的 main 分支
+   git push origin HEAD:main
 
-   # 核对远程 runtime 的提交是否与本地 HEAD 一致
-   git ls-remote --heads origin runtime
+   # 核对远程 main 的提交是否与本地 HEAD 一致
+   git ls-remote --heads origin main
    git rev-parse HEAD
    ```
 

@@ -4,15 +4,17 @@
 
 ## 一、项目分支约定
 
-- `runtime`：云手机在线更新使用的分支，日常发布代码应推送到这里。
-- `main`：仓库主分支，不是当前云手机的运行时更新源。
+- `main`：日常开发和正式发布分支，后续默认使用这个分支。
+- `runtime`：在线更新方案测试和已验证版本的备用分支，不作为日常开发分支。
 - 远程仓库：`git@github.com:qingushan/as-erchong.git`
+
+当前设备的主更新源是 OSS。代码中的 GitHub Raw 备用地址仍指向 `runtime` 分支；如果以后要把备用源也切换到 `main`，需要先修改 `remote_loader.py` 中的 `RELEASE_BRANCH`，再重新打包和发布。
 
 ## 二、首次获取项目
 
 ```bash
-# 从 GitHub 克隆设备使用的 runtime 分支
-git clone -b runtime git@github.com:qingushan/as-erchong.git
+# 从 GitHub 克隆日常使用的 main 分支
+git clone -b main git@github.com:qingushan/as-erchong.git
 
 # 进入克隆出来的项目目录
 cd as-erchong
@@ -21,8 +23,8 @@ cd as-erchong
 没有 SSH 密钥时可以使用 HTTPS：
 
 ```bash
-# 通过 HTTPS 克隆 runtime 分支
-git clone -b runtime https://github.com/qingushan/as-erchong.git
+# 通过 HTTPS 克隆 main 分支
+git clone -b main https://github.com/qingushan/as-erchong.git
 cd as-erchong
 ```
 
@@ -45,27 +47,32 @@ git branch -vv
 git branch -a
 ```
 
-如果看到本地在 `main`，但提示跟踪 `origin/runtime`，表示分支名称和跟踪关系不一致。建议切换到本地 `runtime` 分支。
+如果看到本地在 `main`，但提示跟踪 `origin/runtime`，表示分支名称和跟踪关系不一致。应重新设置 `main` 跟踪 `origin/main`：
 
-## 四、切换到 runtime 分支
+```bash
+# 让本地 main 分支跟踪远程 origin/main
+git branch --set-upstream-to=origin/main main
+```
+
+## 四、切换到 main 分支
 
 ```bash
 # 获取远程最新提交和分支信息，不修改当前工作文件
 git fetch origin
 ```
 
-如果本地还没有 `runtime` 分支：
+如果本地还没有 `main` 分支：
 
 ```bash
-# 创建本地 runtime 分支，并关联远程 origin/runtime
-git switch -c runtime --track origin/runtime
+# 创建本地 main 分支，并关联远程 origin/main
+git switch -c main --track origin/main
 ```
 
-如果本地已经有 `runtime` 分支：
+如果本地已经有 `main` 分支：
 
 ```bash
-# 切换到已有的本地 runtime 分支
-git switch runtime
+# 切换到已有的本地 main 分支
+git switch main
 ```
 
 确认切换结果：
@@ -81,18 +88,18 @@ git status
 ## 五、拉取最新代码
 
 ```bash
-# 从远程 runtime 分支拉取最新提交，只允许快进更新
-git pull --ff-only origin runtime
+# 从远程 main 分支拉取最新提交，只允许快进更新
+git pull --ff-only origin main
 ```
 
 说明：
 
 - `git pull`：下载远程提交并更新本地分支。
 - `--ff-only`：只允许快进更新，发现本地和远程分叉时直接停止。
-- `origin runtime`：明确指定远程仓库和 `runtime` 分支。
+- `origin main`：明确指定远程仓库和 `main` 分支。
 - 有未提交修改时，Git 通常会拒绝拉取，不会直接覆盖本地文件。
 
-本地 `runtime` 已设置跟踪关系时，也可以使用：
+本地 `main` 已设置跟踪关系时，也可以使用：
 
 ```bash
 # 按当前分支已经配置的远程跟踪关系拉取
@@ -156,27 +163,27 @@ git commit -m "更新远程运行时发布版本"
 
 说明：`git add` 只把文件放入暂存区；`git commit` 只修改本地 Git 历史，不会上传到 GitHub。
 
-## 七、推送到 GitHub runtime 分支
+## 七、推送到 GitHub main 分支
 
-本地分支名称为 `runtime` 时：
+本地分支名称为 `main` 时：
 
 ```bash
-# 将本地 runtime 推送到远程 runtime，并建立跟踪关系
-git push -u origin runtime
+# 将本地 main 推送到远程 main，并建立跟踪关系
+git push -u origin main
 ```
 
-本地分支名称不是 `runtime`，但确认当前提交需要发布到远程 `runtime` 时：
+本地分支名称不是 `main`，但确认当前提交需要发布到远程 `main` 时：
 
 ```bash
-# 将当前分支提交推送到远程 runtime，不修改远程 main
-git push origin HEAD:runtime
+# 将当前分支提交推送到远程 main
+git push origin HEAD:main
 ```
 
 推送后核对：
 
 ```bash
-# 查看远程 runtime 当前指向的提交
-git ls-remote --heads origin runtime
+# 查看远程 main 当前指向的提交
+git ls-remote --heads origin main
 
 # 查看本地当前提交
 git rev-parse HEAD
@@ -190,11 +197,11 @@ git rev-parse HEAD
 # 1. 进入项目目录
 cd /d/code/Ascript/erchong
 
-# 2. 切换到设备使用的 runtime 分支
-git switch runtime
+# 2. 切换到日常使用的 main 分支
+git switch main
 
 # 3. 基于远程最新代码进行修改
-git pull --ff-only origin runtime
+git pull --ff-only origin main
 
 # 4. 修改 Python、UI、资源或文档
 
@@ -213,11 +220,11 @@ git diff --cached --stat
 # 9. 创建中文提交
 git commit -m "更新远程运行时发布版本"
 
-# 10. 推送到设备使用的 runtime 分支
-git push -u origin runtime
+# 10. 推送到正式发布使用的 main 分支
+git push -u origin main
 
-# 11. 核对远程分支提交
-git ls-remote --heads origin runtime
+# 11. 核对远程 main 分支提交
+git ls-remote --heads origin main
 ```
 
 推送完成后，再把以下文件上传到 OSS。必须先上传 ZIP，最后覆盖清单：
@@ -240,10 +247,10 @@ https://as-erchong.oss-cn-beijing.aliyuncs.com/
 git status --short
 
 # 临时保存已跟踪和未跟踪文件，并记录原因
-git stash push -u -m "拉取最新 runtime 代码前临时保存"
+git stash push -u -m "拉取最新 main 代码前临时保存"
 
-# 拉取远程 runtime 分支
-git pull --ff-only origin runtime
+# 拉取远程 main 分支
+git pull --ff-only origin main
 
 # 恢复刚才临时保存的本地修改
 git stash pop
