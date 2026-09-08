@@ -750,11 +750,17 @@ class AutoJjbTask(BaseTask):
 
             res = self.find_my_color(common_color,"副本退出-再次进行")
             if res:
-                print("任务失败！！！")
-                return True
+                self.sleep(1)
+                if self.is_text_re_in_ocr(rect=[791,649,1017,699],pattern="再次进行"):
+                    print("任务失败！！！")
+                    return True
 
             res = self.find_my_color(common_color,"波次结束界面")
             if res:
+                # 校验是否波次结束界面
+                self.sleep(1)
+                if not self.is_text_re_in_ocr(rect=[222, 500, 1053, 543], pattern="(撒离|继续桃战)"):
+                    continue
                 print(f"波次完成，当前波次：{now_boci}/{self.level_boci}")
                 self.now_level_boci += 1
                 self.sleep(1)

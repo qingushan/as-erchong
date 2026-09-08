@@ -131,7 +131,7 @@ class AutoWeituomihanTask(BaseTask):
         print(f"开始前往{self.task_name}副本")
         self.go_to_lilian()
         self.sleep(1)
-        self.click_color_to_color(common_color,"历练委托菜单",weituomihan_color,"历练-委托密函界面",x=978,y=99)
+        self.click_until_ocr(x=981, y=101, rect=[412,625,636,683], pattern="(刷新|密函委托)")
         self.sleep(1)
         print(f"成功进入{self.task_name}副本选择界面")
 

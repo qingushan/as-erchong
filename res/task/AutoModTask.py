@@ -39,10 +39,6 @@ class AutoModTask(BaseTask):
 
     def init_level(self):
         # 初始化
-        # self.level_grade = int(self.uiconfig['mod_grade'])
-        # self.level_max_count = int(self.uiconfig['mod_max_num'])
-        # self.level_number = self.uiconfig['mod_level_number']
-
         self.mod_config_list = self.uiconfig["mod_config_list"]
         self.mod_config_list = json.loads(self.mod_config_list)
 
@@ -855,30 +851,10 @@ class AutoModTask(BaseTask):
             self.click_color_to_color(common_color,"副本退出-再次进行",common_color,"左上角红色退出",x=1141,y=672,out_time=60)
             self.sleep(1)
 
-        if self.uiconfig["mod_activity_shr"] == "on":
-            # 收获日退出
-            # res = self.find_my_color(mod_color,"选择关卡界面确认选择")
-            # if res:
-                # self.click(44,32)
-                # self.sleep(3)
-                # self.click(44,32)
-                # self.sleep(3)
-            for i in range(10):
-                res = self.find_my_color(common_color, "左上角红色退出")
-                if res:
-                    self.click(44, 32)
-                    self.sleep(3)
-                else:
-                    break
-
-        else:
-            res = self.find_my_color(mod_color,"选择关卡界面确认选择")
-            if res:
-                self.click_color_to_color(mod_color,"选择关卡界面确认选择",mod_color,"选择关卡界面",x=44,y=32,out_time=60)
-                self.sleep(1)
-
-            self.click_color_to_color(mod_color,"选择关卡界面",common_color,"主界面左上角菜单",x=43,y=34)
-            self.sleep(2)
+        self.click_until_ocr(x=44, y=32, rect=[545, 71, 714, 124], pattern="委托")
+        self.sleep(1)
+        self.click_until_ocr(x=44, y=32, rect=[119, 277, 344, 385], pattern="商店")
+        self.sleep(1)
 
         for i in range(3):
             self.click(778, 684)
@@ -1005,9 +981,8 @@ class AutoModTask(BaseTask):
             if self.level_type == '扼守':
                 res = self.find_my_color(common_color, "波次结束界面")
                 if res:
-                    self.sleep(2)
-                    res = self.find_my_color(common_color, "波次结束界面")
-                    if not res:
+                    self.sleep(1)
+                    if not self.is_text_re_in_ocr(rect=[222,500,1053,543],pattern="(撒离|继续桃战)"):
                         continue
 
                     print(f"波次完成，当前波次：{now_boci}/{self.level_boci}")
@@ -1061,9 +1036,9 @@ class AutoModTask(BaseTask):
             self.level_type = '扼守'
         elif self.level_grade == 70:
             if self.level_number == "第一个":
-                self.level_type = '扼守'
+                self.level_type = '驱离'
             elif self.level_number == "第二个":
-                self.level_type = '扼守'
+                self.level_type = '驱离'
             elif self.level_number == "第三个":
                 self.level_type = '扼守'
             elif self.level_number == "第四个":
