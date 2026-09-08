@@ -348,8 +348,7 @@ class AutoCJSXJTask(BaseTask):
             if res:
                 print("挑战成功,开始校验")
                 self.sleep(1)
-                res = self.find_my_color(cjsxj_color,"挑战完成-下一层")
-                if res:
+                if self.is_text_re_in_ocr(rect=[1030,652,1279,712], pattern="前往"):
                     print("校验成功,挑战成功")
                     return True
                 else:
@@ -359,8 +358,7 @@ class AutoCJSXJTask(BaseTask):
             if res:
                 print("挑战失败,开始校验")
                 self.sleep(1)
-                res = self.find_my_color(cjsxj_color,"挑战完成-失败")
-                if res:
+                if self.is_text_re_in_ocr(rect=[741,657,1051,700], pattern="再次挑战"):
                     print("校验成功,挑战失败")
                     self.isfail = True
                     return False
@@ -502,7 +500,6 @@ class AutoCJSXJTask(BaseTask):
             return True
 
         if self.is_boss():
-            # self.auot_lock_enemy()
             self.lock_enemy()
             self.sleep(0.2)
 
@@ -514,26 +511,23 @@ class AutoCJSXJTask(BaseTask):
                 if not self.find_my_color(common_color,"BOSS_血条_红色"):
                     # 狼人技能
                     print("狼人技能")
-                    # self.auot_lock_enemy()
                     self.lock_enemy()
                     self.sleep(0.2)
                     for i in range(3):
                         self.action_dodge_to_s()
                         self.sleep(0.5)
-                    # self.skill_e()
-                    # self.skill_q()
                     return True
-                else:
-                    self.action_dodge_to_w()
-                    self.sleep(1)
-                    self.lock_enemy()
-                    self.sleep(0.2)
-            else:
-                if self.boss_dodge_to_w_is_ok():
-                    self.boss_dodge_to_w()
-                    for i in range(3):
-                        self.lock_enemy()
-                        self.sleep(0.1)
+                # else:
+                #     self.action_dodge_to_w()
+                #     self.sleep(1)
+                #     self.lock_enemy()
+                #     self.sleep(0.2)
+            # else:
+            #     if self.boss_dodge_to_w_is_ok():
+            #         self.boss_dodge_to_w()
+            #         for i in range(3):
+            #             self.lock_enemy()
+            #             self.sleep(0.1)
 
         # 传入当前当前boss
         combat_options = {
