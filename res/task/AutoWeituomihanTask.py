@@ -149,11 +149,11 @@ class AutoWeituomihanTask(BaseTask):
 
         rect = None
         if self.task_type == "角色":
-            rect = [434,385,697,633]
+            rect = [429,349,690,590]
         elif self.task_type == "武器":
-            rect = [710,380,966,648]
+            rect = [702,352,945,592]
         elif self.task_type == "魔之楔":
-            rect = [984,391,1242,624]
+            rect = [963,356,1211,583]
 
         # level_types = ["驱离","探险","扼守","迁移"]
         # level_types = ["迁移"]
@@ -161,7 +161,7 @@ class AutoWeituomihanTask(BaseTask):
         for i in self.level_types:
             text = i
             if i == "探险":
-                text = "探"
+                text = "(探|採)"
             
             res = None
             for k in range(5):
