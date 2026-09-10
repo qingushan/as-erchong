@@ -124,7 +124,7 @@ class AutoRoleBreakthroughTask(BaseTask):
         print(f"开始前往{self.task_name}副本")
         self.go_to_lilian()
         self.sleep(1)
-        self.click_color_to_color(common_color,"历练委托菜单",role_tupo_color,"委托-探险",x=1165,y=385)
+        self.click_until_ocr(x=1201, y=340, rect=[978,640,1266,683], pattern="开始挑战")
         self.sleep(1)
         print(f"成功进入{self.task_name}副本选择界面")
 
@@ -229,36 +229,37 @@ class AutoRoleBreakthroughTask(BaseTask):
 
     def go_to_activate_level_30(self):
         # 30级激活副本
+        # self.sleep(1)
+        # self.walk_to_w(1000*10)
+        # self.sleep(5)
+        # self.walk_to_d(1000*5)
+        # self.sleep(0.5)
+        #
+        # self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
+        # self.sleep(0.5)
+        #
+        # self.walk_to_w(500)
+        #
+        # res = self.rotate_view_direction_range(common_color,"任务黄色图标",0,70)
+        # if not res:
+        #     return False
+        # self.sleep(0.5)
+        #
+        # for i in range(2):
+        #     res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
+        #     if not res:
+        #         return False
+        #     self.action_jump_fly()
+        #     self.sleep(1)
+        #
+        # self.sleep(1)
+        # res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
+        # if not res:
+        #     return False
+        # self.sleep(0.5)
+        # self.walk_to_w(1000*1.5)
         self.sleep(1)
-        self.walk_to_w(1000*10)
-        self.sleep(5)
-        self.walk_to_d(1000*5)
-        self.sleep(0.5)
-
-        self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        self.sleep(0.5)
-
-        self.walk_to_w(500)
-        
-        res = self.rotate_view_direction_range(common_color,"任务黄色图标",0,70)
-        if not res:
-            return False
-        self.sleep(0.5)
-
-        for i in range(2):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.action_jump_fly()
-            self.sleep(1)
-        
-        self.sleep(1)
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-        self.sleep(0.5)
         self.walk_to_w(1000*1.5)
-
         self.sleep(0.5)
         for i in range(15):
             res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["单行"],pattern="操作")

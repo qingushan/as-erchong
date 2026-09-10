@@ -132,14 +132,6 @@ class AutoModTask(BaseTask):
             self.click(448,505)
         elif self.level_grade == 65:
             self.click(450,573)
-        # elif self.level_grade == 70:
-        #     self.slide(450,562,450,177,dur=500)
-        #     self.sleep(2)
-        #     self.click(447,505)
-        # elif self.level_grade == 80:
-        #     self.slide(450,562,450,177,dur=500)
-        #     self.sleep(2)
-        #     self.click(447,572)
         elif self.level_grade == 70:
             self.click(452,642)
         elif self.level_grade == 75:
@@ -329,16 +321,10 @@ class AutoModTask(BaseTask):
             return True
         
         if self.level_grade == 65:
-            # res = self.go_to_activate_level_65()
-            # if res:
-            #     return True
             res = self.go_to_activate_level_80()
             if res:
                 return True
         elif self.level_grade == 30:
-            # res = self.go_to_activate_level_65()
-            # if res:
-            #     return True
             res = self.go_to_activate_level_80()
             if res:
                 return True
@@ -351,9 +337,6 @@ class AutoModTask(BaseTask):
             if res:
                 return True
         elif self.level_grade == 75:
-            # res = self.go_to_activate_level_75()
-            # if res:
-            #     return True
             res = self.go_to_activate_level_80()
             if res:
                 return True
@@ -405,49 +388,6 @@ class AutoModTask(BaseTask):
                 self.action_jump_fly()
                 self.sleep(1)
 
-    def go_to_activate_level_65(self):
-        # 65级激活副本
-        for i in range(2):
-            self.action_jump_fly()
-            self.sleep(1)
-        
-        # 旋转视角避免ai队友头像挡住任务图标
-        self.rotate_view_to_left(300,500)
-
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-        
-        self.walk_to_w(walk_time=3000)
-        self.sleep(1)
-
-        self.walk_to_d(walk_time=3000)
-        self.sleep(1)
-
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        self.walk_to_w(walk_time=1000)
-        self.sleep(1)
-
-        for i in range(11):
-            self.action_jump_fly()
-            self.sleep(0.5)
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-
-        self.role_restoration()
-
-        res = self.await_until_ocr(rect=[11,203,252,376],pattern="(波次|保护|探险家)",time_out=10)
-        if res:
-            print("激活副本成功")
-            return True
-        else:
-            print("激活副本失败")
-            return False
-
     def check_esho_combat(self):
         # 检查扼守是否激活副本
         res = self.is_text_re_in_ocr(rect=[11,199,251,364],pattern="(保护|波次|探险家)")
@@ -458,370 +398,32 @@ class AutoModTask(BaseTask):
 
     def go_to_activate_level_50(self):
         # 50级激活副本
-        # map_type = -1    # 地图
-        # # 识别当前地图
-        # res = self.find_my_color(mod_color,"50级A图")
-        # if res:
-        #     map_type = 0
-        #
-        # res = self.find_my_color(mod_color,"50级B图")
-        # if res:
-        #     map_type = 1
-        #
-        # res = self.find_my_color(mod_color,"50级C图")
-        # if res:
-        #     map_type = 2
-        #
-        # print(f"当前地图：{map_type}")
-        # if map_type == -1:
-        #     print("未识别到地图")
-        #     return False
-        #
-        # if map_type == 0:
-        #     res = self.go_to_activate_level_50_A()
-        # elif map_type == 1:
-        #     res = self.go_to_activate_level_50_B()
-        # elif map_type == 2:
-        #     res = self.go_to_activate_level_50_C()
-
         for i in range(2):
             self.action_jump_fly()
             self.sleep(1)
 
         self.role_restoration()
 
-        return self.check_esho_combat
-
-    def go_to_activate_level_50_A(self):
-        # 2条路线
-        map_type = -1  # 0:直走电梯     1：重置角色位置
-
-        for i in range(6):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.action_jump_fly()
-            self.sleep(1)
-
-        self.walk_to_s()
-        self.sleep(0.5)
-        self.walk_to_a(6000)
-
-        for i in range(2):
-            self.walk_to_d(400)
-            self.sleep(0.5)
-
-        self.walk_to_w(1000*6)
-
-        self.walk_to_s()
-        self.walk_shift_to_d(2000)
-        self.walk_to_w()
-        self.sleep(1)
-        self.walk_to_d()
-        self.sleep(1)
-
-        for i in range(5):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.walk_to_w()
-            
-        self.role_restoration()
-        self.sleep(1)
-
-        res = self.find_my_color(common_color,"任务黄色图标")
-        if res:
-            if (380 < res.x < 420) and (250 < res.y < 285):
-                map_type = 0
-            else:
-                map_type = 1
-        else:
-            map_type = 1
-        print(f"详细路线：{map_type}")
-
-        if map_type == 0:
-            # 上楼梯
-            self.walk_to_a(1000*1)
-            self.walk_to_w(1000*2.5)
-            self.walk_to_a(1000*4)
-            self.walk_to_s(1000*1.2)
-            self.sleep(0.5)
-            self.walk_to_a(1000)
-            self.sleep(0.5)
-
-            res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",2)
-            if not res:
-                return False
-            self.sleep(0.5)
-            
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-
-            for i in range(10):
-                res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-                if not res:
-                    return False
-                self.action_jump_fly()
-                self.sleep(1)
-                res = self.check_esho_combat()
-                if res:
-                    self.walk_to_w(1000*2)
-                    return True
-                
-            return False
-        elif map_type == 1:
-            # 左边直走
-            res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",2)
-            if not res:
-                return False
-            self.sleep(0.5)
-
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-
-            for i in range(10):
-                res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-                if not res:
-                    return False
-                self.action_jump_fly()
-                self.sleep(1)
-                res = self.check_esho_combat()
-                if res:
-                    self.walk_to_w(1000*2)
-                    return True
-                
-            return False
-
-        return False
-
-    def go_to_activate_level_50_B(self):
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-        for i in range(4):
-            self.action_jump_fly()
-            self.sleep(0.5)
-
-        self.role_restoration()
-        self.sleep(1)
-
-        # 上楼梯
-        self.walk_to_d(1000*1)
-        self.walk_to_s(1000*2.5)
-        self.walk_to_d(1000*4)
-        self.walk_to_w(1000*1.2)
-        self.sleep(0.5)
-        self.walk_to_d(1000)
-        self.sleep(0.5)
-
-        res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",3)
-        if not res:
-            return False
-        self.sleep(0.5)
-        
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        for i in range(10):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.action_jump_fly()
-            self.sleep(1)
-            res = self.check_esho_combat()
-            if res:
-                self.walk_to_w(1000*2)
-                return True
-            
-        return False
-
-        # res = self.find_my_color(common_color,"任务黄色图标")
-        # if res:
-        #     if res.y > 455:
-        #         map_tyep = 0
-        # print(f"详细路线：{map_tyep}")
-
-
-        
-        # for i in range(5):
-        #     res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #     if not res:
-        #         return False
-        #     self.action_jump_fly()
-        #     res = self.is_text_re_in_ocr(rect=[716,312,1028,400],pattern="启动")
-        #     if res:
-        #         m_type = 1
-        #         for i in range(3):
-        #             self.click(822,358)
-        #         break
-        #     self.sleep(0.5)
-        
-        # 校验
-        # if m_type == 0:
-        #     self.walk_to_s()
-        #     res = self.is_text_re_in_ocr(rect=[716,312,1028,400],pattern="启动")
-        #     if res:
-        #         m_type = 1
-        #         for i in range(3):
-        #             self.click(822,358)
-
-        # if m_type == 0:
-        #     self.role_restoration()
-        #     self.rotate_view_to_down(500)
-        #     res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #     if not res:
-        #         return False
-        #     self.walk_to_w(1000*4)
-        #     self.action_jump_fly()
-        #     self.walk_to_w(2000)
-
-        #     for i in range(4):
-        #         res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #         if not res:
-        #             return False
-        #         self.walk_to_w()
-
-        #     self.role_restoration()
-        #     # self.rotate_view_to_right(300,500)
-        #     # self.sleep(0.5)
-        #     res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",3)
-        #     if not res:
-        #         return False
-        #     self.sleep(0.5)
-        #     self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #     self.walk_to_w(2000)
-        # else:
-        #     self.sleep(10)
-        #     for i in range(4):
-        #         self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #         self.action_jump_fly()
-        #         self.sleep(1)
-        #     self.role_restoration()
-        #     self.walk_to_d(2000)
-
-        # res = self.await_until_ocr(pattern="(波次|探险家)",time_out=10)
-        # if res:
-        #     print("激活副本成功")
-        #     return True
-        # else:
-        #     print("激活副本失败")
-        #     return False
-
-    def go_to_activate_level_50_C(self):
-        # 2条路线
-        self.walk_to_w(1000*8)
-        self.sleep(0.5)
-        
-        res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",3)
-        if not res:
-            return False
-        self.sleep(0.5)
-        
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        for i in range(3):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.action_jump_fly()
-            self.sleep(1)
-        
-        self.role_restoration()
-        self.sleep(1)
-
-        # res = self.find_my_color(common_color,"任务黄色图标")
-        # if res:
-        #     if res.y > 455:
-        #         map_type = 0
-        # print(f"详细路线：{map_type}")
-
-        # self.rotate_view_to_right(150,500)
-        # self.sleep(0.5)
-
-        res = self.rotate_view_direction_to_front(common_color,"任务黄色图标",3)
-        if not res:
-            return False
-        self.sleep(0.5)
-        
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        for i in range(2):
-            self.action_jump_fly()
-            self.sleep(1)
-
-        for i in range(10):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
-                return False
-            self.action_jump_fly()
-            self.sleep(1)
-            res = self.check_esho_combat()
-            if res:
-                self.walk_to_w(1000*2)
-                return True
-            
-        return False
-
-        # for i in range(6):
-        #     res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #     if not res:
-        #         return False
-        #     self.action_jump_fly()
-        #     self.sleep(1)
-        #     res = self.is_text_re_in_ocr(rect=[716,312,1028,400],pattern="启动")
-        #     if res:
-        #         break
-            
-        # res = self.is_text_re_in_ocr(rect=[716,312,1028,400],pattern="启动")
-        # if res:
-        #     pass
-        # else:
-        #     self.walk_to_s()
-
-        # res = self.is_text_re_in_ocr(rect=[716,312,1028,400],pattern="启动")
-        # if res:
-        #     for i in range(3):
-        #         self.click(822,358)
-        # else:
-        #     return False
-
-        # self.sleep(12)
-        # for i in range(4):
-        #     self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        #     self.action_jump_fly()
-        #     self.sleep(1)
-
-        # self.role_restoration()
-        # self.walk_to_s(2000)
-        
-        # res = self.await_until_ocr(pattern="(波次|探险家)",time_out=10)
-        # if res:
-        #     print("激活副本成功")
-        #     return True
-        # else:
-        #     print("激活副本失败")
-        #     return False
-
-    def go_to_activate_level_75(self):
-        for i in range(10):
-            self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            self.action_jump_fly()
-            self.sleep(1)
-            res = self.is_text_re_in_ocr(rect=[11,199,251,364],pattern="(保护|波次|探险家)")
-            if res:
-                print("副本激活成功")
-                return True
-        print("激活副本失败")
-        return False
+        return self.check_esho_comba
 
     def go_to_activate_level_80(self):
+        self.sleep(1)
+        res = self.find_my_color(common_color, "任务黄色图标")
+        if res:
+            if res.x >= 800:
+                for i in range(2):
+                    self.action_jump_fly()
+                    self.sleep(1)
+                self.sleep(1)
+                self.role_restoration()
+                for i in range(20):
+                    res = self.is_text_re_in_ocr(rect=[11, 199, 251, 364], pattern="(保护|波次|探险家)")
+                    if res:
+                        print("副本激活成功")
+                        return True
+                    self.sleep(1)
+                print("激活副本失败")
+                return False
         for i in range(10):
             self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
             self.action_jump_fly()
