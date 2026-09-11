@@ -583,8 +583,10 @@ class AutoModTask(BaseTask):
             if self.level_type == '扼守':
                 res = self.find_my_color(common_color, "波次结束界面")
                 if res:
+                    print("波次结束界面,开始校验")
                     self.sleep(1)
-                    if not self.is_text_re_in_ocr(rect=[222,500,1053,543],pattern="(撒离|继续桃战)"):
+                    if not self.is_text_re_in_ocr(rect=[222,500,1053,543],pattern="[撒离继续桃战]+"):
+                        print("校验失败,不是波次结束界面")
                         continue
 
                     print(f"波次完成，当前波次：{now_boci}/{self.level_boci}")
