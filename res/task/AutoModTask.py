@@ -255,8 +255,10 @@ class AutoModTask(BaseTask):
             x = 1183
             y = 443
         elif self.level_number == "第五个":
+            # 收获日无法选择第五个，修改为第四个
             x = 1183
-            y = 537
+            y = 443
+            # y = 537
             self.sleep(5)
         elif self.level_number == "倒数第一个":
             for i in range(4):

@@ -529,7 +529,7 @@ class BaseTask(BaseAction, BaseFind):
         print("回家")
         self.click_color_to_color(common_color,"角色血条-绿色",common_color,"左上角红色退出",x=121,y=114)
         self.sleep(1)
-        self.click_color_to_color(common_color,"左上角红色退出",common_color,"回家-确定",x=55,y=623)
+        self.click_color_to_color(common_color,"左上角红色退出",common_color,"回家-确定",x=57,y=614)
         self.sleep(1)
         self.click(781,413,after_sleep=10)
         self.await_color(common_color,"角色血条-绿色",out_time=60*3)

@@ -174,8 +174,11 @@ class AutoFishTask(BaseTask):
         if not res:
             print("未找到钓鱼入口")
             return False
+        self.sleep(1)
 
         self.click_until_color(common_color,"左上角红色退出",783,357)
+        self.sleep(1)
+        self.click_until_ocr(x=1112, y=664, rect=[67, 2, 330, 82], pattern="[现在时刻]+")
         self.sleep(1)
         if self.uiconfig["fish_insane"] == 'on':
             # 疯狂钓鱼
@@ -183,8 +186,8 @@ class AutoFishTask(BaseTask):
             self.is_have_easy = True
             print("疯狂钓鱼！！")
         else:
-            res = self.click_color_to_color(common_color,"左上角红色退出",fish_color,"甩杆图标",x=1147,y=666)
-            if not res:
+            res = self.await_until_ocr(rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+",time_out=5)
+            if res:
                 self.is_have_easy = True
                 print("悠闲钓鱼！！")
             else:
@@ -378,7 +381,8 @@ class AutoFishTask(BaseTask):
                     # 判断是还有鱼，没有则退出
                     if self.is_text_re_in_ocr(rect=[381,34,908,596],pattern="水中暂时无鱼"):
                         print("当前钓点已无鱼，退出")
-                        self.click_until_color(fish_color, "悠闲甩杆图标", 1146, 586)
+                        self.click_until_ocr(x=1146, y=586, rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+")
+                        # self.click_until_color(fish_color, "悠闲甩杆图标", 1146, 586)
                         self.sleep(1)
                         self.level_exit()
                         break
@@ -392,15 +396,8 @@ class AutoFishTask(BaseTask):
                         self.level_exit()
                         break
 
-                    # # 判断是否需要整点去执行密函
-                    # if self.uiconfig['refresh_time_is_execute_mihan'] == 'on':
-                    #     res = self.is_refresh_time_execute_mihan()
-                    #     if res:
-                    #         self.level_exit()
-                    #         return True
-
                     # 判断是否还有鱼饵
-                    self.get_fish_bait()
+                    # self.get_fish_bait()
 
                     res = self.swing_the_rod()
                     if not res:
