@@ -86,7 +86,7 @@ class AutoZEWeaponTask(BaseTask):
         print(f"开始前往{self.task_name}副本")
         self.go_to_lilian()
         self.sleep(1)
-        self.click_color_to_color(common_color, "历练委托菜单", ze_weapon_color, "历练菜单-深境委托", x=1200, y=652)
+        self.click_until_ocr(x=1190, y=648, rect=[426,609,1248,677], pattern="[灾厄商店深境]+")
         self.sleep(1)
 
         x = None
@@ -98,7 +98,7 @@ class AutoZEWeaponTask(BaseTask):
             x = 726
             y = 336
 
-        self.click_color_to_color(ze_weapon_color, "历练菜单-深境委托", ze_weapon_color, "副本开始菜单", x=x, y=y)
+        self.click_until_ocr(x=x, y=y, rect=[612,520,886,577], pattern="[选择敌人元素属性]+")
         self.sleep(1)
         print(f"成功进入{self.task_name}副本选择界面")
 

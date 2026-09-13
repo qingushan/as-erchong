@@ -384,6 +384,8 @@
                                 <i class="layui-icon layui-icon-tips"></i> 勾选【整点刷新执行委托密函】功能后执行第一个任务时会自动优先去执行委托密函，这是正常现象，因为当前该时间未执行过委托密函
                                 <br>
                                 <i class="layui-icon layui-icon-tips"></i> 勾选【每日五点十分退游戏】功能后当每日05:10时会触发返回手机桌面触发掉线检测，在任务列表中添加【日常任务】配合【掉线检测】功能实现05:10时重启游戏并重新执行任务从而达到7*24小时挂机
+                                <br>
+                                <i class="layui-icon layui-icon-tips"></i> 【排行榜昵称】用于脚本运行时长排行榜展示，最多20个字符（中文、字母、数字、空格、_ - .）；留空表示保持后台当前昵称，首次留空则显示设备标识
                             </div>
                         </div>
                         <div class="layui-form-item">
@@ -402,6 +404,12 @@
                                 <div class="layui-input-inline">
                                     <input type="text" class="layui-input" id="ID-laydate-type-time" name="global_timed_offline_value" placeholder="HH:mm:ss">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">排行榜昵称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" class="layui-input" name="backend_display_name" maxlength="20" placeholder="排行榜昵称">
                             </div>
                         </div>
                     </div>

@@ -8,6 +8,7 @@ from ascript.android.ui import WebWindow
 
 from .res.config import VERSION, ui_resource
 from .res.test.test1 import test11
+from .res.util.BackendClient import start_reporting, stop_reporting
 
 
 # WebWindow 必须由模块级变量持续引用。如果只保存在 start() 的局部变量中，函数
@@ -110,7 +111,23 @@ def tunnel(key, value):
             )
             return
 
-    test11(uiconfig)
+    # 后台上报：注册安装实例、开始运行会话，随后由独立线程定时心跳。上报线程与
+    # 任务线程解耦，后台不可达时只打印日志，不影响下面的任务执行。
+    start_reporting(uiconfig, release_id=_backend_release_id())
+    try:
+        test11(uiconfig)
+    finally:
+        # 任务队列跑完（task_loop=off 时 run() 会返回）或脚本正常退出：尽力而为地
+        # 发送停止请求并短暂等待。定时下线走 system.exit() 强杀进程，发不出停止
+        # 请求，由后台按 last_heartbeat_at + 120s 的超时容差结算（后台文档 8.3）。
+        stop_reporting("task_finished")
+
+
+def _backend_release_id():
+    """上报用的发布标识；工程内置版本没有 release_id，返回空串让后台忽略。"""
+    if not form_release_id or form_release_id.startswith("bundled-"):
+        return ""
+    return form_release_id
 
 
 def _initialize_form_ui():

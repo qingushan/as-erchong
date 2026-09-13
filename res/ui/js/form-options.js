@@ -13,7 +13,9 @@ var DEFAULT_FORM_DATA = {
     mijin_max_num: "10",
     mijin_grade: "40",
     mijin_role: "1",
-    global_check_month_card: "on"
+    global_check_month_card: "on",
+    // 排行榜昵称：留空表示不改后台昵称（Python 端 res/util/BackendClient.py 会做同样的规范化）
+    backend_display_name: ""
 };
 
 /*

@@ -50,7 +50,10 @@ erchong/
     │   │   └── ActivityCombatController.py # 活动技能策略
     │   └── cloud/         # 云游戏技能控制器预留包，当前尚未迁移
     ├── util/
-    │   └── CloudRoleSkillUtil.py # 云游戏版连招库（暂未迁入 combat/cloud）
+    │   ├── CloudRoleSkillUtil.py # 云游戏版连招库（暂未迁入 combat/cloud）
+    │   └── BackendClient.py      # 后台上报：install_id/run_id、注册/心跳/停止（独立线程）
+    ├── certs/
+    │   └── backend-ca.crt        # 后台自签证书（客户端固定校验用，随运行时 ZIP 更新）
     ├── test/
     │   ├── test1.py       # test11(uiconfig)：真实入口，末尾 AppGame(uiconfig).run()
     │   │                  #   （前面大量注释掉的单任务调试代码，调试时取消注释单跑）
@@ -79,6 +82,7 @@ erchong/
 7. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
 8. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)` → `AppGame(uiconfig).run()` 进入正式调度。
 9. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
+10. 点击「运行」时 `tunnel("submit")` 先调 `BackendClient.start()` 上后台登记会话（注册 → 开始会话 → 独立线程定时心跳），失败只打印日志不影响任务；`test11` 返回后 `finally` 里尽力而为地发一次停止请求（详见「十一、后台上报」）。
 
 ### uiconfig 关键字段
 - `task_list`：JSON 字符串，`[{"type": "mijin"}, ...]`，按顺序执行
@@ -86,6 +90,7 @@ erchong/
 - `global_check_game_is_offline`：掉线检测开关
 - `global_check_month_card` / `global_do_mosaic` / `global_timed_offline`(+`_value` HH:MM:SS) / `global_time_5_offline`
 - `refresh_time_is_execute_mihan`：整点插队执行委托密函
+- `backend_display_name`：排行榜显示昵称，最多 20 字符；留空表示不修改后台昵称
 - 配置校验：任务列表包含 `mihan`（委托密函）时，不允许同时开启 `refresh_time_is_execute_mihan=on`；前端提交和 Python 入口均会拦截。
 - 其余为各任务专属参数（前缀区分：`mijin_*`、`fish_map_*`、`mihan_*`、`lmyy_*` 等，见 form-options.js 的 CHECKBOX_FIELDS）；夜航手册每条配置为 `{grade, num, boci, level}`，其中 `boci` 仅对扼守生效
 
@@ -183,7 +188,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 
 - 入口只有 `__init__.py`；包内一律相对导入（`from ...res.task.X import X`），不写 `if __name__ == "__main__"`。
 - 分辨率 1280x720，坐标写死；找色 diff 默认 0.9。
-- 持久化用 `KeyValue`（表单缓存 key=`asdata`；密函状态 key=`is_execute_mihan`）。
+- 持久化用 `KeyValue`（表单缓存 key=`asdata`；密函状态 key=`is_execute_mihan`；后台身份 key=`backend_identity`）。
 - 版本号在 `res/config.py` 的 `VERSION`，同时要更新 `res/ui/updateLogs.json`（界面"更新日志"页签数据源）。
 - 调试：在 `res/test/test1.py` 的 `test11` 中注释掉 `AppGame` 两行、取消注释对应任务的单跑代码。
 
@@ -243,10 +248,27 @@ CloudRoleSkillUtil(CloudBaseAction)
 6. 让设备重新启动脚本。检查日志出现“已加载远程运行时”，并读取 `/storage/emulated/0/AScript/erchong_runtime/active.json`，确认 `release_id` 和 `sha256` 与 `dist/latest.json` 一致；配置 UI 能正常显示后才算发布完成。
 7. 如果清单下载、ZIP 校验或导入失败，加载器会自动使用设备上一次成功缓存；设备没有缓存时使用工程内置版本。回滚时将 OSS 中的 `dist/latest.json` 恢复为上一个已验证包的信息，并同步推送 GitHub `runtime` 分支作为备用源。
 
-## 十一、更新记录（Devin 维护，代码变更时在此追加）
+## 十一、后台上报（M6 脚本接入）
+
+后台项目独立维护，目录 `D:\code\AI\AS-二重螺旋后台`（中文路径，compose 走 `scripts\compose.cmd` 的 ASCII 联接）；两个项目之间**唯一的接口契约**是同名文档《后台开发技术文档.md》（v2 契约修订版，脚本侧只读）。后台第一阶段定位为：运行时发布管理 + 安装实例 + 运行会话 + 运行时长排行榜。
+
+**本轮只接入会话上报，不改运行时清单来源**（清单仍走 OSS → GitHub），所以本次改动不需要设备重新导入 AScript 工程——`remote_loader.py` / `runtime_entry.py` 之外的逻辑都在随运行时 ZIP 更新的 `res/` 里。
+
+- 入口接线：`runtime_entry.tunnel("submit")` 通过互斥校验后先 `start_reporting(uiconfig, release_id)`，再执行 `test11(uiconfig)`；`finally` 里 `stop_reporting("task_finished")`（投递命令并最多等 8 秒把请求发出去）。
+- 客户端模块：`res/util/BackendClient.py`，单例 + **独立守护线程** + 有界命令队列。看门狗用 `ctypes.PyThreadState_SetAsyncExc` 强杀任务线程，心跳不能搭在任务线程里，所以必须解耦。
+- 身份：`install_id`（`ER-XXXX-XXXX-XXXX`）存 `KeyValue` 的 `backend_identity` 键——不能放 `asdata`（表单缓存会重置），也不能放 `releases/<release_id>/`（更新即换目录）；`run_id` 每次启动新生成（`<install_id>-<yyyyMMddTHHmmss>-<6位随机>`，全局唯一）。
+- 会话流程：注册 → 开始会话 → 立即发一次心跳并按服务端下发的 180 秒间隔继续 → 停止。**时长与排行榜全部由服务端算**，客户端不提交任何时间戳；心跳失败按 30s → 2min → 10min 退避；收到 `RUN_ALREADY_STOPPED`(409) 时换新 `run_id` 重建；建立会话阶段最多重试 5 次（设备刚开机网络未就绪的自愈路径）。
+- 注册节流：注册接口限同一 `install_id` 10 次/天，所以只在「当天还没注册」或「昵称变了」时才注册，其余启动直接开始会话。
+- 昵称：表单「全局配置 → 排行榜昵称」→ `uiconfig.backend_display_name`，随注册上报，留空表示沿用后台当前值。JS（`maxlength=20`）与 Python 两侧做同样的规范化（≤20 码点、中文/字母/数字/空格 `_ - .`、保留名如 `admin`/`系统` 会被丢弃；昵称不合法不会中断会话）。
+- TLS：后台是纯 IP + Caddy 自签证书（`https://123.57.172.142:8443`，ECS 未备案只有 8443 可用）。客户端用 `res/certs/backend-ca.crt` 固定校验，证书随运行时 ZIP 更新；固定校验失败或证书缺失时降级为不校验并打印告警。**降级是可接受的**：这条链路只承载统计上报，不承载可执行代码（清单与 ZIP 仍走 OSS/GitHub 的合法证书）。
+- 失败策略：所有异常在线程内吞掉，只打印日志，绝不冒泡到 `AppGame.run()`；后台完全不可达时脚本照常启动与执行，`start()` 立即返回（后台不在启动路径上，不影响 21.2 的 ≤3 秒启动约束）。
+- 排障关键字：`后台上报线程已启动` / `后台会话已开始` / `后台心跳失败` / `后台暂时不可达`；本机身份可用 `KeyValue.get('backend_identity')` 查看。
+
+## 十二、更新记录（Devin 维护，代码变更时在此追加）
 
 | 日期 | 版本 | 变更摘要 |
 |---|---|---|
+| 2026-09-13 | 待发版 | M6 脚本接入：新增 `res/util/BackendClient.py` 后台上报（install_id 持久化于 `KeyValue.backend_identity`、run_id 全局唯一、注册/开始会话/心跳/停止全部走独立守护线程，异常只打日志）；`runtime_entry` 在提交配置后启动上报、任务结束后尽力停止；全局配置新增「排行榜昵称」；新增 `res/certs/backend-ca.crt` 用于后台自签证书固定校验；运行时清单来源不变（仍为 OSS → GitHub），因此无需设备重新导入工程；未修改版本号 |
 | 2026-08-31 | 待发版 | 新增项目 `mode.json` 运行模式配置；配置页面改为通过 `ui_ready` 通知 Python 完成加载，再设置版本并自动展示更新日志，修复慢设备上函数未定义的问题；未修改版本号 |
 | 2026-08-30 | 待发版 | 远程运行时改用阿里云 OSS 直链作为主源、GitHub Raw 作为备用，移除公共缓存服务依赖；保留大小与 SHA-256 校验、内容寻址缓存及离线回退；脚本更新后首次打开配置界面自动展示“关于脚本”中的本次更新日志，每个发布包只展示一次；同步更新发布目录说明和上传顺序；未修改版本号 |
 | 2026-08-29 | 待发版 | 新增远程运行时加载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
