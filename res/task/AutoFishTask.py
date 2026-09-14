@@ -182,7 +182,6 @@ class AutoFishTask(BaseTask):
         self.sleep(1)
         if self.uiconfig["fish_insane"] == 'on':
             # 疯狂钓鱼
-            self.click_color_to_color(common_color,"左上角红色退出",fish_color,"悠闲甩杆图标",x=1147,y=666)
             self.is_have_easy = True
             print("疯狂钓鱼！！")
         else:

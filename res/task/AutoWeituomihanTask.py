@@ -87,15 +87,14 @@ class AutoWeituomihanTask(BaseTask):
         }
         self.combat_skill.set_role_skill_config_custom(skill_config)
 
-        if self.uiconfig['mihan_level_type_quli'] == "on":
-            self.level_types.append("驱离")
+        if self.uiconfig['mihan_level_type_esho'] == "on":
+            self.level_types.append("扼守")
 
         if self.uiconfig['mihan_level_type_tanxian'] == "on":
             self.level_types.append("探险")
 
-        # 避免因为本地数据缓存导致继续能选择扼守
-        # if self.uiconfig['mihan_level_type_esho'] == "on":
-        #     self.level_types.append("扼守")
+        if self.uiconfig['mihan_level_type_quli'] == "on":
+            self.level_types.append("驱离")
 
         # 委托密函类型
         if self.uiconfig['mihan_task_level_role'] == "on":
@@ -156,7 +155,6 @@ class AutoWeituomihanTask(BaseTask):
             rect = [963,356,1211,583]
 
         # level_types = ["驱离","探险","扼守","迁移"]
-        # level_types = ["迁移"]
         print("开始识别副本类型")
         for i in self.level_types:
             text = i
@@ -186,12 +184,6 @@ class AutoWeituomihanTask(BaseTask):
 
     def select_mihan(self):
         # 选择密函
-
-        # 判断是否还有密函
-        # res = self.find_my_color(weituomihan_color,"选择密函-无密函")
-        # if res:
-        #     print("没有密函碎片了")
-        #     return False
 
         # 默认选择第一个
         self.click(650,344)
@@ -279,8 +271,8 @@ class AutoWeituomihanTask(BaseTask):
         pattern = ""
         rect = None
         if self.level_type == '扼守':
-            pattern = "(波次|轮次|保护|探险家)"
-            rect = [4,175,221,325]
+            pattern = "(波次|保护|探险家)"
+            rect = [12,214,285,399]
         elif self.level_type == '探险':
             pattern="(轮次|血清)"
             rect=[4,166,159,316]
@@ -312,11 +304,6 @@ class AutoWeituomihanTask(BaseTask):
 
     def go_to_activate_level_quli(self):
         # 驱离激活，判断是否电梯图即可
-        # res = self.find_my_color(weituomihan_color,"驱离电梯图")
-        # if res:
-        #     print("驱离-电梯图")
-        #     self.walk_to_w(1000*10)
-        #     self.sleep(5)
         # 驱离，强制向前跳三下
         for i in range(3):
             self.action_jump_fly(after_sleep=2)
@@ -329,11 +316,6 @@ class AutoWeituomihanTask(BaseTask):
     def go_to_activate_level_tanxian(self):
         # 探险激活
         map_type = -1
-        # res = self.find_my_color(weituomihan_color,"探险A图")
-        # if res:
-        #     map_type = 0
-        # else:
-        #     map_type = 1
 
         res = None
         for i in range(10):
@@ -433,145 +415,36 @@ class AutoWeituomihanTask(BaseTask):
         
     def go_to_activate_level_esho(self):
         # 扼守激活
-        map_type = -1
+        res = self.await_until_color(common_color,"任务黄色图标")
+        if not res:
+            print("没有找到任务图标，结束")
+            return False
 
-        res = self.find_my_color(weituomihan_color,"扼守A图")
         if res:
-            map_type = 0
-        else:
-            map_type = 1
-
-        print(f"当前地图:{map_type}")
-
-        if map_type == 0:
-            res = self.go_to_activate_level_esho_A()
-            if res:
-                return True
-        elif map_type == 1:
-            res = self.go_to_activate_level_esho_B()
-            if res:
-                return True
-
-        return False
-
-    def go_to_activate_level_esho_A(self):
-        # 扼守A图
-        for i in range(2):
-            self.action_jump_fly()
-            self.sleep(1)
-        
-        # 旋转视角避免ai队友头像挡住任务图标
-        self.rotate_view_to_left(300,500)
-
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-        
-        self.walk_to_w(walk_time=3000)
-        self.sleep(1)
-
-        self.walk_to_d(walk_time=3000)
-        self.sleep(1)
-
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        self.walk_to_w(walk_time=1000)
-        self.sleep(1)
-
-        for i in range(17):
-            res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            if not res:
+            if res.x >= 800:
+                for i in range(2):
+                    self.action_jump_fly()
+                    self.sleep(1)
+                self.sleep(1)
+                self.role_restoration()
+                for i in range(20):
+                    res = self.is_text_re_in_ocr(rect=[11, 199, 251, 364], pattern="(保护|波次|探险家)")
+                    if res:
+                        print("副本激活成功")
+                        return True
+                    self.sleep(1)
+                print("激活副本失败")
                 return False
+        for i in range(10):
+            self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
             self.action_jump_fly()
             self.sleep(1)
-            res = self.is_text_re_in_ocr(rect=[11,203,252,376],pattern="(波次|保护|探险家)")
+            res = self.is_text_re_in_ocr(rect=[11,199,251,364],pattern="(保护|波次|探险家)")
             if res:
                 print("副本激活成功")
                 return True
-
+        print("激活副本失败")
         return False
-
-    def go_to_activate_level_esho_B(self):
-        map_type = -1   # 复位后分几种情况  0:前方  1：右边  2：后面
-        self.role_restoration()
-        self.sleep(1)
-
-        res = self.find_my_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        if 600 < res.x < 700:
-            map_type = 0    
-        elif res.x >= 700:
-            map_type = 1
-        elif res.x < 500:
-            map_type = 2
-
-        print(f"当前详细地图：{map_type}")
-
-        if map_type == 2:
-            self.rotate_view_to_left(200,dur=500)
-            self.rotate_view_to_left(200,dur=500)
-            self.rotate_view_to_left(200,dur=500)
-
-        res = self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-        if not res:
-            return False
-
-        # self.rotate_view_to_top(100,dur=500)
-        # self.sleep(0.5)
-
-        if map_type == 2:
-            res = self.rotate_view_direction_range(common_color,"任务黄色图标",0,300)
-            if not res:
-                return False
-            self.sleep(0.5)
-        elif map_type == 0:
-            res = self.rotate_view_direction_range(common_color,"任务黄色图标",0,220)
-            if not res:
-                return False
-            self.sleep(0.5)
-        else:
-            res = self.rotate_view_direction_range(common_color,"任务黄色图标",0,200)
-            if not res:
-                return False
-            self.sleep(0.5)
-
-        if map_type == 0:
-            self.fly_spear_num(5)
-            self.sleep(2)
-            self.walk_to_s()
-            self.sleep(2)
-            self.walk_to_w()
-            self.sleep(0.5)
-        elif map_type == 1:
-            self.fly_spear_num(3)
-            self.sleep(3)
-        elif map_type == 2:
-            self.fly_spear_num(5)
-            self.sleep(2)
-            self.walk_to_s()
-            self.sleep(2)
-            self.walk_to_w()
-            self.sleep(0.5)
-        
-        # self.rotate_view_to_down(100,dur=500)
-        res = self.rotate_view_direction_range(common_color,"任务黄色图标",1,70)
-        if not res:
-            return False
-        self.sleep(0.5)
-
-        for i in range(3):
-            self.rotate_view_to_middle_by_color(common_color,"任务黄色图标")
-            self.fly_spear_num(1)
-            self.sleep(1)
-        
-        self.role_restoration()
-
-        res = self.check_is_combat()
-        return res
 
     def quit_level(self):
         # 退出当前副本
@@ -596,8 +469,6 @@ class AutoWeituomihanTask(BaseTask):
             self.click_color_to_color(weituomihan_color,"委托密函-选择密函",weituomihan_color,"历练-委托密函界面",x=46,y=32,out_time=60)
             self.sleep(1)
 
-        # self.click_color_to_color(weituomihan_color,"历练-委托密函界面",common_color,"主界面左上角菜单",x=43,y=29)
-        # self.sleep(1)
         self.click_until_ocr(x=43, y=29, rect=[119, 277, 344, 385], pattern="商店")
         self.sleep(1)
 
@@ -674,7 +545,8 @@ class AutoWeituomihanTask(BaseTask):
         res = False
 
         if self.level_type == '扼守':
-            res = self.combat_esho()
+            # res = self.combat_esho()
+            res = self.combat_tanxian()
         elif self.level_type == '驱离':
             res = self.combat_quli()
         elif self.level_type == '迁移':
@@ -836,7 +708,7 @@ class AutoWeituomihanTask(BaseTask):
 
     def combat_tanxian(self):
         # 探险战斗
-        print("探险战斗")
+        print("探险/扼守战斗")
         start_time = self.time()
 
         max_time = 60 * 5
