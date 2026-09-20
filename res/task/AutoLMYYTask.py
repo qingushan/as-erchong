@@ -247,26 +247,26 @@ class AutoLMYYTask(BaseTask):
 
         # 筛选奖励
         if "铜币" in self.select_config["奖励"]:
-            self.click(136,290,after_sleep=0.5)
+            self.click(142,290,after_sleep=0.5)
 
         if "红豆" in self.select_config["奖励"]:
-            self.click(215,291,after_sleep=0.5)
+            self.click(234,291,after_sleep=0.5)
 
         if "娇娇币" in self.select_config["奖励"]:
-            self.click(296,290,after_sleep=0.5)
+            self.click(325,290,after_sleep=0.5)
 
         if "角色经验" in self.select_config["奖励"]:
-            self.click(375,290,after_sleep=0.5)
+            self.click(417  ,290,after_sleep=0.5)
 
         if "武器经验" in self.select_config["奖励"]:
-            self.click(456,290,after_sleep=0.5)
+            self.click(509,290,after_sleep=0.5)
 
         if "线索" in self.select_config["奖励"]:
-            self.click(535,290,after_sleep=0.5)
+            self.click(602,290,after_sleep=0.5)
 
         # 筛选等级
         if "50" in self.select_config["等级"]:
-            self.click(127,385,after_sleep=0.5)
+            self.click(126,384,after_sleep=0.5)
 
         if "70" in self.select_config["等级"]:
             self.click(400,385,after_sleep=0.5)

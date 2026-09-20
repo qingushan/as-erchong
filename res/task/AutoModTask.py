@@ -186,54 +186,53 @@ class AutoModTask(BaseTask):
         y = None
         if self.level_number == "第一个":
             x = 1183
-            y = 178
+            y = 181
         elif self.level_number == "第二个":
             x = 1183
-            y = 266
+            y = 269
         elif self.level_number == "第三个":
             x = 1183
-            y = 355
+            y = 358
         elif self.level_number == "第四个":
             x = 1183
-            y = 443
+            y = 449
         elif self.level_number == "第五个":
             x = 1183
-            y = 537
+            y = 536
         elif self.level_number == "倒数第一个":
             for i in range(4):
                 self.slide(611,537,611,177,dur=500)
                 self.sleep(1)
-            x = 1183
-            y = 537
+            x = 1178
+            y = 509
         elif self.level_number == "倒数第二个":
             for i in range(4):
                 self.slide(611,537,611,177,dur=500)
                 self.sleep(1)
-            x = 1183
-            y = 443
+            x = 1181
+            y = 417
         elif self.level_number == "倒数第三个":
             for i in range(4):
                 self.slide(611,537,611,177,dur=500)
                 self.sleep(4)
             x = 1183
-            y = 355
+            y = 331
         elif self.level_number == "倒数第四个":
             for i in range(4):
                 self.slide(611,537,611,177,dur=500)
                 self.sleep(1)
             x = 1183
-            y = 266
+            y = 242
         elif self.level_number == "倒数第五个":
             for i in range(4):
                 self.slide(611,537,611,177,dur=500)
                 self.sleep(1)
             x = 1183
-            y = 174
+            y = 151
         elif self.level_number == "60级驱逐":
             self.sleep(10)
 
         self.click_until_ocr(x=x, y=y, rect=[669,625,1275,699], pattern="选择")
-        # self.click_color_to_color(mod_color,"选择关卡界面",mod_color,"选择关卡界面确认选择",x=x,y=y)
         self.sleep(1)
 
     def select_level_activity_shr(self):
@@ -331,7 +330,8 @@ class AutoModTask(BaseTask):
             if res:
                 return True
         elif self.level_grade == 50:
-            res = self.go_to_activate_level_50()
+            # res = self.go_to_activate_level_50()
+            res = self.go_to_activate_level_80()
             if res:
                 return True
         elif self.level_grade == 70:
@@ -406,7 +406,7 @@ class AutoModTask(BaseTask):
 
         self.role_restoration()
 
-        return self.check_esho_comba
+        return self.check_esho_combat()
 
     def go_to_activate_level_80(self):
         self.sleep(1)
