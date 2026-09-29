@@ -29,6 +29,7 @@ var DEFAULT_FORM_DATA = {
  */
 var CHECKBOX_FIELDS = [
     'fish_map_bhc', 'fish_map_jjd', 'fish_map_xsd', 'fish_map_fxb', 'fish_map_bnc', 'fish_map_csy', 'fish_map_krg', 'fish_map_wms',
+    'fish_map_lyz', 'fish_map_aeknslx',
     'global_check_month_card', 'task_loop', 'global_timed_offline', 'global_check_game_is_offline',
     'mihan_level_type_quli', 'mihan_level_type_tanxian', 'mihan_level_type_esho', 'mijin_run_old', 'global_do_mosaic',
     'mihan_task_level_role', 'mihan_task_level_weapon',

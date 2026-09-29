@@ -69,6 +69,12 @@ class AutoFishTask(BaseTask):
 
         if self.uiconfig['fish_map_bhcz'] == 'on':
             self.maps.append("百花车站")
+
+        if self.uiconfig['fish_map_lyz'] == 'on':
+            self.maps.append("乐园镇")
+
+        if self.uiconfig['fish_map_aeknslx'] == 'on':
+            self.maps.append("阿尔卡诺山裂隙")
         
         print(f"初始化完成，当前执行钓点：{self.maps}")
 
@@ -139,6 +145,12 @@ class AutoFishTask(BaseTask):
         elif map_name == "百花车站":
             self.click(40,203,after_sleep=2)
             self.click(217,123,after_sleep=2)
+        elif map_name == "乐园镇":
+            self.click(40,441,after_sleep=2),
+            self.click(217,128,after_sleep=2)
+        elif map_name == "阿尔卡诺山裂隙":
+            self.click(40,441,after_sleep=2),
+            self.click(375,128,after_sleep=2)
         
         self.sleep(1)
         self.click_color_to_color(fish_color,"追踪当前钓鱼点",common_color,"地图传送",x=997,y=657)
@@ -159,8 +171,11 @@ class AutoFishTask(BaseTask):
         elif map_name == "百花车站":
             self.walk_to_d(1000*2)
             self.sleep(0.5)
+        elif map_name == "阿尔卡诺山裂隙":
+            self.walk_to_a(1000*1)
+            self.sleep(0.5)
 
-        for i in range(20):
+        for i in range(30):
             res = self.is_text_re_in_ocr(rect=[735,333,828,382],pattern="鱼")
             if res:
                 break
@@ -176,21 +191,29 @@ class AutoFishTask(BaseTask):
             return False
         self.sleep(1)
 
-        self.click_until_color(common_color,"左上角红色退出",783,357)
+        # self.click_until_color(common_color,"左上角红色退出",783,357)
+        self.click_until_color(common_color,"左上角红色退出",res[0].x,res[0].y)
         self.sleep(1)
-        self.click_until_ocr(x=1112, y=664, rect=[67, 2, 330, 82], pattern="[现在时刻]+")
+        self.click_until_ocr(x=1112, y=664, rect=[67, 2, 330, 82], pattern="[现在时刻]+",time_out=5)
+        # self.click_until_ocr(x=1119, y=664, rect=[846,11,1075,53], pattern="[昼夜说明]+")
         self.sleep(1)
-        if self.uiconfig["fish_insane"] == 'on':
-            # 疯狂钓鱼
+        res = self.await_until_ocr(rect=[24, 566, 341, 711], pattern="[连续钓鱼授渔以鱼]+", time_out=5)
+        if res:
             self.is_have_easy = True
-            print("疯狂钓鱼！！")
+            print("悠闲钓鱼！！")
         else:
-            res = self.await_until_ocr(rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+",time_out=5)
-            if res:
-                self.is_have_easy = True
-                print("悠闲钓鱼！！")
-            else:
-                print("没有悠闲")
+            print("没有悠闲")
+        # if self.uiconfig["fish_insane"] == 'on':
+        #     # 疯狂钓鱼
+        #     self.is_have_easy = True
+        #     print("疯狂钓鱼！！")
+        # else:
+        #     res = self.await_until_ocr(rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+",time_out=5)
+        #     if res:
+        #         self.is_have_easy = True
+        #         print("悠闲钓鱼！！")
+        #     else:
+        #         print("没有悠闲")
         print(f"成功进入{map_name}钓点")
         self.sleep(1)
 
@@ -351,10 +374,12 @@ class AutoFishTask(BaseTask):
         self.logui.change_log_text(text)
 
     def level_exit(self):
-        if self.is_have_easy:
-            self.click_color_to_color(fish_color,"悠闲甩杆图标",common_color,"左上角红色退出",x=32,y=35)
-        else:
-            self.click_color_to_color(fish_color,"甩杆图标",common_color,"左上角红色退出",x=32,y=35)
+        # if self.is_have_easy:
+        #     self.click_color_to_color(fish_color,"悠闲甩杆图标",common_color,"左上角红色退出",x=32,y=35)
+        # else:
+        #     self.click_color_to_color(fish_color,"甩杆图标",common_color,"左上角红色退出",x=32,y=35)
+        self.click_until_color(common_color,"左上角红色退出",x=32,y=35)
+        self.sleep(1)
         self.click_color_to_color(common_color,"左上角红色退出",common_color,"主界面左上角菜单",x=32,y=35)
         print("返回主界面成功")
 
@@ -368,25 +393,37 @@ class AutoFishTask(BaseTask):
         self.refresh_log()
         for man_name in self.maps:
             self.level_finish_count = 0
+            self.now_map = man_name
+            self.refresh_log()
+
+
             res = self.go_to_level(man_name)
             if not res:
                 print(f"前往钓点失败----{man_name}")
                 continue
 
-            self.now_map = man_name
-            while 1:
-                if self.uiconfig["fish_insane"] == 'on':
-                    # 疯狂钓鱼
-                    # 判断是还有鱼，没有则退出
-                    if self.is_text_re_in_ocr(rect=[381,34,908,596],pattern="水中暂时无鱼"):
-                        print("当前钓点已无鱼，退出")
-                        self.click_until_ocr(x=1146, y=586, rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+")
-                        # self.click_until_color(fish_color, "悠闲甩杆图标", 1146, 586)
-                        self.sleep(1)
-                        self.level_exit()
-                        break
+            if self.is_have_easy:
+                # 悠闲钓鱼
+                print("开始自动钓鱼")
+                res = self.click_color_to_color(fish_color,"悠闲甩杆图标",fish_color,"自动钓鱼图标",x=1146,y=588)
+                if not res:
+                    print("没鱼了，结束")
+                    self.level_exit()
+                    continue
+                self.refresh_log()
 
-                    self.click(x=1146,y=586,after_sleep=random.uniform(0.4,1.5))
+            while 1:
+                if self.is_have_easy:
+                    # 悠闲钓鱼,等待钓鱼完毕
+                    if self.is_text_re_in_ocr(rect=[24, 566, 341, 711], pattern="[连续钓鱼授渔以鱼]+"):
+                        res1 = self.find_my_color(fish_color,"悠闲甩杆图标")
+                        res2 = self.find_my_color(fish_color,"自动钓鱼图标")
+                        if res1 and (not res2):
+                            print("自动钓鱼结束,当前钓点已无鱼")
+                            self.sleep(1)
+                            self.level_exit()
+                            break
+                        self.sleep(0.1)
                 else:
                     self.refresh_log()
 
@@ -410,4 +447,39 @@ class AutoFishTask(BaseTask):
                     else:
                         self.level_finish_count += 1
                         self.level_faile_count += 1
+
+                # if self.uiconfig["fish_insane"] == 'on':
+                #     # 疯狂钓鱼
+                #     # 判断是还有鱼，没有则退出
+                #     if self.is_text_re_in_ocr(rect=[381,34,908,596],pattern="水中暂时无鱼"):
+                #         print("当前钓点已无鱼，退出")
+                #         self.click_until_ocr(x=1146, y=586, rect=[24,566,341,711],pattern="[连续钓鱼授渔以鱼]+")
+                #         self.sleep(1)
+                #         self.level_exit()
+                #         break
+                #
+                #     self.click(x=1146,y=586,after_sleep=random.uniform(0.4,1.5))
+                # else:
+                #     self.refresh_log()
+                #
+                #     if self.level_finish_count >= self.level_max_count:
+                #         print(f"任务完成,计划执行 {self.level_max_count} 次,当前已完成 {self.level_finish_count} 次")
+                #         self.level_exit()
+                #         break
+                #
+                #     # 判断是否还有鱼饵
+                #     # self.get_fish_bait()
+                #
+                #     res = self.swing_the_rod()
+                #     if not res:
+                #         self.level_exit()
+                #         break
+                #
+                #     res = self.fishing()
+                #     if res:
+                #         self.level_finish_count += 1
+                #         self.level_ok_count += 1
+                #     else:
+                #         self.level_finish_count += 1
+                #         self.level_faile_count += 1
 

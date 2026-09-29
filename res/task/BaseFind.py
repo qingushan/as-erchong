@@ -49,7 +49,7 @@ class BaseFind(BaseGame):
                 if (re.findall(re.compile(pattern), r.text)):
                     result.append(r)
                     # result = True
-                    break
+                    # break
 
         return result
                 

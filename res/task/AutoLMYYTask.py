@@ -112,7 +112,7 @@ class AutoLMYYTask(BaseTask):
         self.click_until_ocr(x=463, y=324, rect=[82,13,155,64], pattern="活动")
         self.sleep(1)
         res = None
-        for i in range(3):
+        for i in range(5):
             for i in range(5):
                 res = self.is_text_re_in_ocr(rect=[5,77,267,638], pattern="([联袂演绎]).*?([联袂演绎])")    # 匹配任意两个字
                 if res:
@@ -121,7 +121,7 @@ class AutoLMYYTask(BaseTask):
             if res:
                 break
             else:
-                self.slide(98, 533, 106, 113, dur=500)
+                self.slide(98, 533, 106, 250, dur=1000)
                 self.sleep(4)
         if not res:
             print(f"没有找到--{self.task_name}，退出")
@@ -196,6 +196,14 @@ class AutoLMYYTask(BaseTask):
                 if len(result) > 0:
                     self.my_level_count = int(result[0])
                     break
+
+        # 可能会存在不到百分之三的副本
+        res = self.is_text_re_in_ocr(rect=[82, 104, 244, 626],pattern="[参与者]+")
+        if len(res) == self.my_level_count:
+            pass
+        else:
+            print(f"识别副本数量:{self.my_level_count},实际副本数量:{len(res)},识别副本数与实际副本数量不一致,可能存在没打到百分之三的副本")
+            self.my_level_count = len(res)
 
         print(f"当前已参加关卡数量：{self.my_level_count}")
 
