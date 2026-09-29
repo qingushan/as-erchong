@@ -51,19 +51,19 @@ class AutoDailyTaskTask(BaseTask):
 
     def task_take_a_picture(self):
         print("开始拍照")
-        self.click_color_to_color(common_color,"角色血条-绿色",common_color,"主界面菜单展示",x=38,y=30)
+        self.click_until_ocr(x=38, y=30, rect=[119, 277, 344, 385], pattern="商店")
         self.sleep(1)
-        # self.click(49,467,after_sleep=3)
-        self.click(49,537,after_sleep=3)
-
-        self.click_until_color(daily_task_color,"拍照-保存",1239,359)
+        self.click_until_ocr(x=48, y=491, rect=[10,404,165,710], pattern="[焦距自定义]+")
         self.sleep(1)
-
-        self.click(799,677,after_sleep=3)
-        self.click(1245,68,after_sleep=3)
+        self.click_until_ocr(x=1223, y=358, rect=[675,651,1164,710], pattern="[取消保存]+")
+        self.sleep(1)
+        self.click_until_ocr(x=800, y=680, rect=[10,404,165,710], pattern="[焦距自定义]+")
+        self.sleep(1)
+        self.click_until_ocr(x=34, y=33, rect=[119, 277, 344, 385], pattern="商店")
+        self.sleep(1)
 
         for i in range(3):
-            self.click(634,666)
+            self.click(778, 684)
 
         res = self.find_my_color(common_color,"角色血条-绿色")
         if res:
@@ -75,46 +75,51 @@ class AutoDailyTaskTask(BaseTask):
     def task_get_fishing_lure(self):
         # 领取鱼饵
         print("开始领取鱼饵")
-        self.click_color_to_color(common_color,"角色血条-绿色",common_color,"主界面菜单展示",x=38,y=30)
+        self.click_until_ocr(x=38, y=30, rect=[119, 277, 344, 385], pattern="商店")
         self.sleep(1)
-        self.click_color_to_color(common_color,"主界面菜单展示",common_color,"左上角红色退出",x=173,y=273)
-        self.sleep(3)
-        self.click_color_to_color(common_color,"左上角红色退出",daily_task_color,"商店-喧闹卖场-蛋皎的印象商店",x=1204,y=88)
-        self.sleep(1)
-        self.click(557,424,after_sleep=3)
+        self.click_until_ocr(x=230, y=324, rect=[3,5,329,124], pattern="[商店推荐札箱]+")
+        self.sleep(6)
+        self.click_until_ocr(x=1196, y=89, rect=[12,119,514,191], pattern="[巡游纪念世界风物]+")
+        self.sleep(2)
+        self.click_until_ocr(x=562, y=426, rect=[40,7,399,64], pattern="[渔业协会]+")
+        self.sleep(2)
+
+        self.click(40,124,after_sleep=3)
 
         # 冰湖城
         res = self.find_my_color(daily_task_color,"通用鱼饵")
         if res:
             print("购买鱼饵-冰湖城")
-            self.click_color_to_color(common_color,"左上角红色退出",daily_task_color,"通用鱼饵-购买",x=res.x,y=res.y)
+            self.click_until_ocr(x=res.x, y=res.y, rect=[647,527,949,580], pattern="[购买]+")
             self.sleep(1)
-            self.click(927,424,after_sleep=2)
-            self.click(780,511,after_sleep=3)
+
+            self.click(901,444,after_sleep=2)
+            self.click(796,553,after_sleep=3)
 
             self.click(634,687,after_sleep=2)
             self.click(634,687,after_sleep=2)
 
         # 皓京
-        self.click(49,188,after_sleep=3)
+        self.click(39,204,after_sleep=3)
         res = self.find_my_color(daily_task_color,"通用鱼饵")
         if res:
             print("购买鱼饵-皓京")
-            self.click_color_to_color(common_color,"左上角红色退出",daily_task_color,"通用鱼饵-购买",x=res.x,y=res.y)
+            self.click_until_ocr(x=res.x, y=res.y, rect=[647, 527, 949, 580], pattern="[购买]+")
             self.sleep(1)
-            self.click(927,424,after_sleep=2)
-            self.click(780,511,after_sleep=3)
 
-            self.click(634,687,after_sleep=2)
-            self.click(634,687,after_sleep=2)
-        
-        self.click_color_to_color(common_color,"左上角红色退出",daily_task_color,"商店-喧闹卖场-蛋皎的印象商店",x=45,y=34)
+            self.click(901, 444, after_sleep=2)
+            self.click(796, 553, after_sleep=3)
+
+            self.click(634, 687, after_sleep=2)
+            self.click(634, 687, after_sleep=2)
+
+        self.click_until_ocr(x=35, y=32, rect=[12, 119, 514, 191], pattern="[巡游纪念世界风物]+")
+        self.sleep(2)
+        self.click_until_ocr(x=35, y=32, rect=[119, 277, 344, 385], pattern="商店")
         self.sleep(1)
 
-        self.click(45,34,after_sleep=3)
-
         for i in range(3):
-            self.click(634,666)
+            self.click(778, 684)
 
         res = self.find_my_color(common_color,"角色血条-绿色")
         if res:
@@ -154,14 +159,14 @@ class AutoDailyTaskTask(BaseTask):
         self.click_color_to_color(common_color,"角色血条-绿色",common_color,"左上角红色退出",x=121,y=114)
         self.sleep(1)
         # 烟津渡
-        self.click(994,664,after_sleep=3)
-        self.click(993,183,after_sleep=3)
+        self.click(1082,614,after_sleep=3)
+        self.click(979,183,after_sleep=3)
         self.click(982,326,after_sleep=3)
         self.click(978,391,after_sleep=3)
         self.click(626,700,after_sleep=3)
         # 蛋皎的印象商店
         self.click(1207,239,after_sleep=3)
-        self.click(704,336,after_sleep=3)
+        self.click(702,396,after_sleep=3)
         self.click(1071,657,after_sleep=10)
         self.await_color(common_color,"角色血条-绿色",out_time=60*3)
         self.sleep(20)
@@ -187,7 +192,7 @@ class AutoDailyTaskTask(BaseTask):
         self.click_color_to_color(common_color, "角色血条-绿色", common_color, "左上角红色退出", x=121, y=114)
         self.sleep(1)
         # 皓京
-        self.click(994,662, after_sleep=3)
+        self.click(1082,614, after_sleep=3)
         self.click(993, 183, after_sleep=3)
         self.click(966,399, after_sleep=3)
         self.click(963,463, after_sleep=3)
@@ -217,28 +222,32 @@ class AutoDailyTaskTask(BaseTask):
     def task_get_daily_award(self):
         # 领取每日历练奖励
         print("开始领取每日历练奖励")
-        self.click_color_to_color(common_color,"角色血条-绿色",common_color,"主界面菜单展示",x=38,y=30)
+        self.click_until_ocr(x=38, y=30, rect=[119, 277, 344, 385], pattern="商店")
         self.sleep(1)
-        self.click_color_to_color(common_color,"主界面菜单展示",common_color,"左上角红色退出",x=124,y=442)
-        self.sleep(3)
+        self.click_until_ocr(x=175, y=547, rect=[85, 2, 276, 64], pattern="历练")
+        self.sleep(1)
 
         self.click(46,116,after_sleep=2)
         self.click(1124,100,after_sleep=3)
+
         # 全部领取
-        self.click(1114,649,after_sleep=3)
-        self.click(626,687,after_sleep=3)
-        self.click(626,687,after_sleep=3)
+        if self.is_text_re_in_ocr(rect=[983,612,1262,685],pattern="[全部领取]+"):
+            self.click(1114,649,after_sleep=3)
+            self.click(626,687,after_sleep=3)
+            self.click(626,687,after_sleep=3)
 
         # 领取奖励
         self.click(604,186,after_sleep=3)
-        self.click(945,182,after_sleep=3)
+        self.click(1007,177,after_sleep=3)
+        self.click(565,463, after_sleep=3)
+        self.click(1007, 177, after_sleep=3)
         self.click(626,687,after_sleep=3)
 
         # 返回
         self.click(44,31,after_sleep=3)
 
         for i in range(3):
-            self.click(634,666)
+            self.click(778, 684)
 
         res = self.find_my_color(common_color,"角色血条-绿色")
         if res:
