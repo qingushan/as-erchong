@@ -42,8 +42,8 @@ class ActivityCombatController(CombatSkillController):
         },
         "10-4-1": {
             "skill_z_max_time": 10, "skill_z_max_count": 1,
-            "skill_q_max_time": 99999, "skill_q_max_count": 1,
-            "skill_e_max_time": 5, "skill_e_max_count": 1,
+            "skill_q_max_time": 99999, "skill_q_max_count": 1, "skill_q_last_time":0,
+            "skill_e_max_time": 1, "skill_e_max_count": 1,
         },
     }
 
@@ -66,6 +66,9 @@ class ActivityCombatController(CombatSkillController):
                 elif key == "skill_click_last_time" and self.skill_type == "8-4-2":
                     # 芙洛拉常规活动保留进入副本后约 5 秒再重击的节奏。
                     self.skill_config[key] = now
+                # elif key == "skill_q_last_time" and self.skill_type == "10-4-1":
+                #     # 法露茜3秒后开大
+                #     self.skill_config[key] = now - self.skill_config["skill_q_max_time"] + 3
                 else:
                     self.skill_config[key] = 0
         if "index_" in self.skill_config:
@@ -147,11 +150,21 @@ class ActivityCombatController(CombatSkillController):
                 self.sleep(0.5)
             self.sleep(1)
 
+            self.skill_q(after_sleep=4)
+            for i in range(4):
+                self.skill_q(after_sleep=2)
+
             self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
             self.sleep(1)
 
-            for _ in range(2):
-                self.action_jump_fly()
+            self.action_jump_fly(after_sleep=1)
+            self.action_jump_fly(after_sleep=0.5)
+            for i in range(10):
+                self.combat_left_click()
+            self.lock_enemy()
+            self.lock_enemy()
+            for i in range(10):
+                self.combat_left_click()
 
     def start(self):
         """执行寻敌后的首次准备，并建立活动技能的计时基准。"""
@@ -267,5 +280,6 @@ class ActivityCombatController(CombatSkillController):
             self._cast("skill_q", self.skill_q, after_sleep=0.5)
             self._cast("skill_e", self.skill_e, after_sleep=0.5)
             self._cast_z()
+            # self.lock_enemy()
             self.combat_left_click()
             self.sleep(0.1)
