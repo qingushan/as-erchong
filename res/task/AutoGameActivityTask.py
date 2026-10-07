@@ -95,7 +95,8 @@ class AutoGameActivityTask(BaseTask):
     def select_level_grade(self):
         # 选择等级
         if self.uiconfig['game_activity_get_score'] == "on":
-            self.click(121,236)
+            # self.click(121,236)
+            self.click(114, 315)
         else:
             if self.level_grade == 60:
                 self.click(114,121)

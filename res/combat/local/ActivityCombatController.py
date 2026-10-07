@@ -40,6 +40,11 @@ class ActivityCombatController(CombatSkillController):
             "skill_z_max_time": 10, "skill_z_max_count": 1,
             "skill_e_max_time": 0.5, "skill_e_max_count": 1,
         },
+        "10-4-1": {
+            "skill_z_max_time": 10, "skill_z_max_count": 1,
+            "skill_q_max_time": 99999, "skill_q_max_count": 1,
+            "skill_e_max_time": 5, "skill_e_max_count": 1,
+        },
     }
 
     def configure(self, skill_type, skill_z_max_time=9999, skill_z_max_count=1):
@@ -123,13 +128,24 @@ class ActivityCombatController(CombatSkillController):
             else:
                 for _ in range(2):
                     self.action_jump_fly()
-        elif self.skill_type in ("9-4-2"):
+        elif self.skill_type in ("9-4-2",):
             for _ in range(2):
                 self.action_jump_fly()
                 self.sleep(0.5)
             self.sleep(1)
 
             self.skill_q(after_sleep=4)
+
+            self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
+            self.sleep(1)
+
+            for _ in range(2):
+                self.action_jump_fly()
+        elif self.skill_type in ("10-4-1","10-4-2"):
+            for _ in range(2):
+                self.action_jump_fly()
+                self.sleep(0.5)
+            self.sleep(1)
 
             self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
             self.sleep(1)
@@ -156,6 +172,8 @@ class ActivityCombatController(CombatSkillController):
             self.skill_config["combat_start_time"] = now
             self.skill_config["last_time"] = 0
         elif self.skill_type == "9-4-2":
+            self.lock_enemy()
+        elif self.skill_type == "10-4-1":
             self.lock_enemy()
         self.skill_config["skill_z_last_time"] = 0
 
@@ -244,4 +262,10 @@ class ActivityCombatController(CombatSkillController):
         elif self.skill_type == "9-4-2":
             self._cast("skill_e", self.skill_e, after_sleep=0.5)
             self._cast_z()
+            self.sleep(0.1)
+        elif self.skill_type == "10-4-1":
+            self._cast("skill_q", self.skill_q, after_sleep=0.5)
+            self._cast("skill_e", self.skill_e, after_sleep=0.5)
+            self._cast_z()
+            self.combat_left_click()
             self.sleep(0.1)
