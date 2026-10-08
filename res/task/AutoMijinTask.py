@@ -1,5 +1,5 @@
 from ...res.task.BaseTask import BaseTask
-from ...res.assets.color import mijin_color, common_color
+from ...res.assets.color import *
 
 import threading
 import time
@@ -13,6 +13,8 @@ class AutoMijinTask(BaseTask):
     def __init__(self,uiconfig=None):
         super().__init__()
 
+        self.uiconfig = uiconfig
+
         self.now_level = 0  # 当前关卡
         self.level_max_time = 60  # 每个关卡超时时间
         self.level_start_time = time.time()  # 当前关卡开始时间
@@ -25,18 +27,39 @@ class AutoMijinTask(BaseTask):
         self.level_faile_count = 0 # 探索失败次数
 
         self.gold = 0   # 时之纺线
+        self.role = "夫人"
 
         self.moling_boss_max_time = 5   # boss战斗魔灵最大释放间隔
         self.moling_boss_last_time = 0  # boss战斗魔灵最后一次释放时间
+
+        self.find_door_names = ["至暗幽影", "深邃幽影", "深渊回声", "休整", "离散幽影", "微茫幽影"]  # 需要查找的门的顺序
+
+        self.is_boss_door = False   # 是否关底boss
+        self.now_boss = ""      # 当次迷津关底boss
+
+        # 进入门之后关卡显示的名字
+        self.door_open_name = {
+            "至暗幽影":"战斗",
+            "深邃幽影":"战斗",
+            "深渊回声":"奇遇",
+            "休整":"休整",
+            "离散幽影":"战斗",
+            "微茫幽影":"战斗",
+        }
+
+        self.level_type_dict = {
+            "-1":"其他",
+            "0":"战斗",
+            "1":"前往下一层",
+            "2":"休整",
+            "3":"奇遇",
+        }
 
         self.inti_mijin(uiconfig)
 
     def go_to_mijin(self):
         print("开始前往迷津")
-        self.click_color_to_color(common_color,"主界面左上角菜单",common_color,"主界面菜单展示",x=38,y=30)
-        self.sleep(1)
-        self.click_color_to_color(common_color,"主界面菜单展示",common_color,"左上角红色退出",x=126,y=415)
-        self.sleep(1)
+        self.go_to_lilian()
         self.click_color_to_color(common_color,"左上角红色退出",mijin_color,"历练-迷津",x=46,y=324)
         self.sleep(1)
         self.click_until_ocr(x=1103,y=513,rect=[19,498,1265,693],pattern="(坠入深渊|命运|翻阅手记)")
@@ -47,8 +70,8 @@ class AutoMijinTask(BaseTask):
         print("开始退出迷津")
         self.click_color_to_color(common_color,"左上角红色退出",mijin_color,"历练-迷津",x=44,y=31)
         self.sleep(1)
-        self.click_color_to_color(mijin_color,"历练-迷津",common_color,"主界面左上角菜单",x=44,y=34)
-        self.sleep(2)
+        self.click_until_ocr(x=44, y=34, rect=[119, 277, 344, 385], pattern="商店")
+        self.sleep(1)
 
         for i in range(3):
             self.click(634,666)
@@ -63,13 +86,32 @@ class AutoMijinTask(BaseTask):
         # 迷津初始化
         map_role = {
             '0':'水母',
-            '1':'夫人'
+            '1':'夫人',
+            '2':'止流'
         }
 
         if uiconfig:
             self.level_grade = uiconfig['mijin_grade']
             self.level_max_count = int(uiconfig['mijin_max_num'])
             self.role = map_role[uiconfig['mijin_role']]
+
+            # 选门优先级
+            res = int(uiconfig['mijin_select_door'])
+            if res == 0:
+                self.find_door_names = ["至暗幽影", "深邃幽影", "深渊回声", "休整", "离散幽影", "微茫幽影"]
+            elif res == 1:
+                self.find_door_names = ["至暗幽影", "深邃幽影", "离散幽影", "微茫幽影", "深渊回声", "休整"]
+            elif res == 2:
+                self.find_door_names = ["至暗幽影", "深邃幽影", "深渊回声", "离散幽影", "微茫幽影", "休整"]
+            print(f"选门优先级:{self.find_door_names}")
+
+            # 魔灵技能
+            self.moling_common_max_time = float(uiconfig['mijin_combat_common_time']) # 普通战斗魔灵最大释放间隔
+            self.moling_common_last_time = 0  # 普通战斗魔灵最后一次释放时间
+            self.moling_boss_max_time = float(uiconfig['mijin_combat_boss_time']) # boss战斗魔灵最大释放间隔
+            self.moling_boss_last_time = 0  # boss战斗魔灵最后一次释放时间
+            print(f"普通战斗魔灵时间：{self.moling_common_max_time}")
+            print(f"boss战斗魔灵时间：{self.moling_boss_max_time}")
         else:
             # 默认
             self.level_grade = "40"  # 迷津等级
@@ -84,6 +126,9 @@ class AutoMijinTask(BaseTask):
         if self.role == '夫人':
             self.level_max_time = 60*3
             self.skill_time["大招"] = 15
+        elif self.role == '止流':
+            self.level_max_time = 60*3
+            self.skill_time["大招"] = 15
 
     def run(self):
         self.refresh_log()
@@ -93,8 +138,8 @@ class AutoMijinTask(BaseTask):
             self.refresh_log()
 
             # 复苏
-            r = self.find_my_color(mijin_color,"复苏")
-            if r:
+            res = self.is_text_re_in_ocr(rect=[593,611,681,662],pattern="复苏")
+            if res:
                 print("复苏")
                 self.click(636,633)
                 self.sleep(1)
@@ -102,7 +147,7 @@ class AutoMijinTask(BaseTask):
 
             # 判断当前是否boss战斗
             if self.is_boss():
-                self.release_skills()
+                self.combat()
                 continue
 
             res = self.check_level_is_timeout()
@@ -117,56 +162,43 @@ class AutoMijinTask(BaseTask):
                         continue
 
             # 判断当前是否战斗
-            if self.find_my_color(mijin_color,"右上角战斗红色"):
+            r1 = self.find_my_color(mijin_color,"右上角战斗红色")
+            r2 = self.find_my_color(mijin_color,"任务")
+            if r1 and (not r2):
                 self.combat()
                 continue
 
+            res = self.recognition_level_type()
+            if res == "-1":
+                res = self.level_other()
+            elif res == "0":
+                res = self.level_combat()
+            elif res == "1":
+                res = self.level_to_to_next_level()
+            elif res == "2":
+                res = self.level_rest()
+            elif res == "3":
+                res = self.level_qiyu()
+
             res = self.ocr(rect=[4,0,1272,690])
-            # print(res)
             if not res:
                 self.sleep(0.5)
                 continue
-
             for r in res:
                 text = r.text
-                if self.re_matching("(前往下一层深渊|继续探索)", text):
-                    self.walk_to_door()
-                    break
-                elif self.re_matching("复苏", text):
-                    self.click(636,633)
-                    self.sleep(1)
-                elif text == "战斗":
-                    self.combat()
-                    break
-                elif self.re_matching("(选择1枚烛芯|刷新|探索详情)", text):
-                    print("选择1枚烛芯")
-                    self.select_buff()
-                    self.level_start_time = time.time()
-                    break
-                elif self.re_matching("(获得遗物|获得烛芯|点击空白处关闭|激活套装|点击空白处继续)", text):
-                    self.click(154, 510)
-                    break
-                elif self.re_matching("探索成功", text):
-                    self.level_finish_count += 1
-                    self.level_ok_count += 1
-                    print(f"迷津完成,当前完成次数:{self.level_ok_count}")
-                    self.ocr_gold()
-                    self.click(1222, 55)
-                    self.await_until_ocr(pattern="坠入深渊", time_out=30)
-                    break
-                elif self.re_matching("探索失败", text):
-                    print("探索失败")
-                    self.level_finish_count += 1
-                    self.level_faile_count += 1
-                    self.ocr_gold()
-                    self.click(1222, 55)
-                    break
-                elif self.re_matching("坠入深渊", text):
+                if self.re_matching("坠入深渊", text):
                     # 判断当前满足迷津次数
                     if self.level_finish_count >= self.level_max_count:
                         print(f"迷津任务完成,计划执行 {self.level_max_count} 次,当前已完成 {self.level_finish_count} 次")
                         self.quit_mijin()
                         return True
+
+                    # 判断是否需要整点去执行密函
+                    if self.uiconfig['refresh_time_is_execute_mihan'] == 'on':
+                        res = self.is_refresh_time_execute_mihan()
+                        if res:
+                            self.quit_mijin()
+                            return True
 
                     self.click(r.center_x, r.center_y)
                     self.await_until_ocr(pattern="难度选择", time_out=30)
@@ -176,14 +208,12 @@ class AutoMijinTask(BaseTask):
                     self.click(1129, 654)
 
                     self.now_level = 0
+                    self.is_boss_door = False
+                    self.now_boss = ""
                     self.init_now_level()
                     break
-                elif self.re_matching("上次探索过深渊", text):
-                    self.click(392, 425)
-                    self.click(1088, 687)
-                    break
 
-            self.sleep(1)
+            self.sleep(0.5)
 
     def re_matching(self, pattern, text):
         # 使用正则匹配
@@ -195,6 +225,8 @@ class AutoMijinTask(BaseTask):
         self.level_time_out_count = 0
         self.now_level = self.now_level + 1
         self.level_restart_status = False
+        self.moling_common_last_time = 0
+        self.moling_boss_last_time = 0
         print(f"当前关卡-----{self.now_level}")
 
     def close_mijin(self):
@@ -204,7 +236,7 @@ class AutoMijinTask(BaseTask):
         self.sleep(1)
         self.click_color_to_color(mijin_color,"退出并结算",common_color,"退出委托_确定",x=1207,y=639)
         self.sleep(1)
-        self.click_color_to_color(common_color,"退出委托_确定",mijin_color,"迷津结束界面",x=776,y=413,out_time=60)
+        self.click_color_to_color(common_color,"退出委托_确定",mijin_color,"迷津结束界面",x=795,y=436,out_time=60)
         self.sleep(1)
         # 识别时之纺线
         res = self.find_my_color(mijin_color,"迷津结束界面")
@@ -248,6 +280,8 @@ class AutoMijinTask(BaseTask):
             pattern = "(流明枝|辉萤石)"
         elif self.role == '夫人':
             pattern = "(浮海月|技能范围|辉萤石|曳光虫)"
+        elif self.role == '止流':
+            pattern = "(浮海月|技能范围|辉萤石|曳光虫)"
 
         self.sleep(1)
         res = self.ocr(pattern=pattern, rect=[466, 104, 1257, 589])
@@ -267,6 +301,8 @@ class AutoMijinTask(BaseTask):
                 # 默认选择第一个
                 self.click(609, 400)
 
+                self.click(728,507)     # 防止出现bug，没有三个buff选项
+
         # 选择
         self.click(1155, 684, after_sleep=2)
 
@@ -285,12 +321,6 @@ class AutoMijinTask(BaseTask):
             self.click(124, 395)
 
         self.sleep(1)
-
-    def release_skills(self):
-        if self.role == '水母':
-            self.role_combat_0()
-        elif self.role == '夫人':
-            self.role_combat_1()
 
     def role_combat_0(self):
         # 水母战斗
@@ -325,15 +355,28 @@ class AutoMijinTask(BaseTask):
             # bosss战斗初始化时间防止超时
             self.level_start_time = time.time()
 
+            # 判断是否boss大招
+            if self.find_my_color(cjsxj_color,"boss白色血条"):
+                print(f"{self.now_boss}----大招")
+                if self.now_boss in ['狼人','雪国的野兽','典狱长','西比尔','赛琪']:
+                    self.action_dodge_to_s()
+                    self.sleep(0.5)
+                    return True
+
             if self.find_my_color(common_color,"BOSS处决"):
                 print("boss处决")
                 self.click(996,248)
 
-            self.auot_lock_enemy()
-            self.sleep(0.5)
+            self.lock_enemy()
+            # self.sleep(0.2)
+            # self.lock_enemy()
+            # self.sleep(0.2)
+            # self.auot_lock_enemy()
+            # self.sleep(0.5)
 
             self.action_dodge_to_w()
             self.sleep(1)
+            self.lock_enemy()
 
             if self.skill_q_mp_is_ok():
                 self.skill_q()
@@ -348,8 +391,12 @@ class AutoMijinTask(BaseTask):
             
             # boss还在
             if self.is_boss():
-                self.auot_lock_enemy()
-                self.sleep(0.5)
+                self.lock_enemy()
+                # self.sleep(0.2)
+                # self.lock_enemy()
+                # self.sleep(0.2)
+                # self.auot_lock_enemy()
+                # self.sleep(0.5)
                 res = self.find_my_color(common_color,"没有子弹")
                 if res:
                     print("没有子弹了")
@@ -357,28 +404,88 @@ class AutoMijinTask(BaseTask):
                         self.mijin_moling_boss()    # 魔灵
                         self.combat_left_click()
                 else:
-                    for i in range(50):
-                        self.mijin_moling_boss()    # 魔灵
-                        self.combat_right_click()
+                    if self.uiconfig['mijin_ranged_weapon'] == "0":
+                        # 其他武器
+                        for i in range(50):
+                            self.mijin_moling_boss()    # 魔灵
+                            self.combat_right_click()
+                    elif self.uiconfig['mijin_ranged_weapon'] == "1":
+                        # 花弓
+                        for i in range(5):
+                            self.mijin_moling_boss()    # 魔灵
+                            # 蓄力
+                            x = self.action_button_position["远程攻击"][0]
+                            y = self.action_button_position["远程攻击"][1]
+                            self.click(x, y, dur=600, after_sleep=0.1)
+                            # self.combat_right_click()
         else:
+            self.mijin_moling_common()
             if self.skill_q_is_ok():
                 self.skill_q()
-            if self.skill_z_is_ok():
-                self.skill_z()
+            # if self.skill_z_is_ok():
+            #     self.skill_z()
             for i in range(6):
                 # 判断是否还在战斗
                 r = self.find_my_color(mijin_color,"右上角战斗红色")
                 if not r:
-                    print("战斗结束")
-                    break
+                    res = self.is_text_re_in_ocr(rect=[5,197,203,312],pattern="战斗")
+                    if not res:
+                        print("战斗结束")
+                        return False
+                self.mijin_moling_common()
                 self.skill_e(after_sleep=0.5)
                 self.skill_e(after_sleep=0.5)
                 x = self.action_button_position["远程攻击"][0]
                 y = self.action_button_position["远程攻击"][1]
                 self.combat_bullet()
-                # self.slide(x,y,x+500,y,1000)
                 self.slide(x,y,x+300,y,1000)
 
+    def skill_2(self):
+        # 止流连招
+        self.skill_e(dur=1000, after_sleep=1)
+        self.skill_e(after_sleep=1)
+        for i in range(4):
+            self.skill_q(after_sleep=0.5)
+        self.sleep(1)
+
+    def role_combat_2(self):
+        # 止流战斗
+        if self.is_boss():
+            self.skill_time["大招"] = 5
+
+            # bosss战斗初始化时间防止超时
+            self.level_start_time = time.time()
+
+            # 判断是否boss大招
+            if self.find_my_color(cjsxj_color,"boss白色血条"):
+                print(f"{self.now_boss}----大招")
+                if self.now_boss in ['狼人','雪国的野兽','典狱长','西比尔','赛琪']:
+                    self.action_dodge_to_s()
+                    self.sleep(0.5)
+                    return True
+
+            if self.find_my_color(common_color,"BOSS处决"):
+                print("boss处决")
+                self.click(996,248)
+
+            self.lock_enemy()
+            self.action_dodge_to_w()
+            self.sleep(1)
+            self.lock_enemy()
+
+            if self.skill_q_is_ok():
+                self.skill_2()
+
+            self.mijin_moling_boss()    # 魔灵
+            
+        else:
+            self.skill_time["大招"] = 5
+
+            if self.skill_q_is_ok():
+                self.skill_2()
+
+            self.mijin_moling_common()
+            
     def walk_to_task(self):
         # 前往任务
         res = self.rotate_view_to_middle_by_color(mijin_color,"任务")
@@ -393,14 +500,367 @@ class AutoMijinTask(BaseTask):
                 if not self.find_my_color(mijin_color,"任务"):
                     break
 
-    def combat(self):
-        # 战斗
+    def level_combat(self):
+        # 战斗关卡
         if self.find_my_color(mijin_color,"任务"):
-            print('有任务-----')
+            print('开始前往指定地点')
             self.walk_to_task()
             self.level_restart_status = True
         else:
-            self.release_skills()
+            self.combat()
+
+    def level_to_to_next_level(self):
+        # 前往下一层
+        print("开始前往下一层")
+        start_time = time.time()
+        max_time = 60
+
+        # 校验是否有门，没有门则退出
+        if not self.is_have_door():
+            return False
+
+        self.rotate_view_to_down(400)
+
+        for door_name in self.find_door_names:
+            while 1:
+                if time.time() - start_time > max_time:
+                    return False
+                
+                res = self.ocr(rect=[706,322,949,391],pattern=door_name)
+                if not res:
+                    res = self.rotate_view_to_middle_by_color(mijin_color,door_name,behind=True)
+                    if not res:
+                        break
+                    self.walk_to_w()
+                    self.sleep(0.5)
+
+                res = None
+                for i in range(3):
+                    res = self.ocr(rect=[706,322,949,391],pattern=door_name)
+                    if res:
+                        break
+                if res:
+                    x = res[0].center_x
+                    y = res[0].center_y
+                    self.click(x, y)
+                    pattern = self.door_open_name[door_name]
+                    res = self.click_until_ocr(x,y,rect=[16,197,206,328],pattern=pattern)
+                    if res:
+                        print(f"成功进入---{door_name}")
+
+                        # 进门后刷新技能
+                        if self.role == '止流':
+                            self.skill_time['大招_释放时间'] = 0
+
+                        if door_name == "至暗幽影":
+                            self.is_boss_door = True
+                        self.init_now_level()
+                        if door_name in ["离散幽影","微茫幽影"]:
+                            self.is_map_jam_trees()
+                        return True
+
+                self.sleep(0.1)
+
+    def level_qiyu(self):
+        # 奇遇
+        map_type = -1   # 奇遇地图  0：战斗奇遇
+        is_paotai = False   # 是否炮台
+        res = self.find_my_color(mijin_color,"任务")
+        if res:
+            if (self.center_x - 50) < res.x < (self.center_x + 50):
+                print("黄色图标在中间")
+                # 判断是否战斗奇遇
+                if  res.y > 460:
+                    print("战斗奇遇")
+                    map_type = 0
+                self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                self.walk_to_w(1000*4)
+            elif (370 < res.x < 400) and (360 < res.y < 390):
+                # 炮台
+                print("准备炮台")
+                is_paotai = True
+                self.rotate_view_to_middle_by_color(mijin_color,"任务")
+            else:
+                for i in range(6):
+                    self.walk_to_w(1000)
+                self.sleep(0.5)
+                self.rotate_view_direction_to_front(mijin_color,"任务",2)
+                self.sleep(0.5)
+                self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                self.sleep(0.5)
+                self.walk_to_w(1000*3)
+                self.sleep(0.5)
+
+            for i in range(10):
+                self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                res = self.is_text_re_in_ocr(rect=[706,322,949,391],pattern="火焰")
+                if res:
+                    break
+                self.walk_to_w(300)
+                self.sleep(0.5)
+
+            res = None
+            for i in range(5):
+                res = self.is_text_re_in_ocr(rect=[706,322,949,391],pattern="火焰")
+                if res:
+                    break
+                self.sleep(0.5)
+
+            if not res:
+                print("进入奇遇失败")
+                return False
+            
+            x = res[0].x
+            y = res[0].y
+            res = self.click_until_ocr(x,y,rect=[3,622,68,658],pattern="奇遇")
+            if not res:
+                return False
+                
+            for i in range(50):
+                if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
+                    break
+
+                if self.is_text_re_in_ocr(rect=[3,622,68,658],pattern="奇遇"):
+                    self.click(41,32,after_sleep=0.1)
+
+                if map_type == 0:
+                    # 战斗奇遇
+                    res = self.is_text_re_in_ocr(rect=[773,459,1252,703],pattern="(附和|是的|沉默|加入他们|回应|拥抱一東阳光)")
+                    if res:
+                        print("选择不战斗")
+                        x = res[0].x
+                        y = res[0].y
+                        self.click(x,y)
+                        for i in range(5):
+                            self.click(1030,648,after_sleep=0.1)
+                    if i > 30:
+                        # 防止检测失败
+                        self.click(1030,648,after_sleep=0.1)
+                else:
+                    self.click(1030,648,after_sleep=0.1)
+
+            # # 校验是否成功回到主页面
+            # self.sleep(1)
+            # for i in range(10):
+            #     if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
+            #         break
+
+                # 判断是否在退出页面
+                # if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
+                #     break
+
+                self.sleep(1)
+
+            # 校验是否炮台
+            if is_paotai:
+                print("开始炮台奇遇")
+                res = None
+                for i in range(50):
+                    res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["单行"],pattern="操作")
+                    if res:
+                        break
+                    self.sleep(0.1)
+
+                if res:
+                    return True
+                else:
+                    print("找不到炮台操作")
+                    for i in range(3):
+                        self.d_and_jupm()
+                        self.sleep(2)
+                        for i in range(5):
+                            res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["单行"],pattern="操作")
+                            if res:
+                                return True
+                            self.sleep(0.1)
+                    print("查找炮台操作失败")
+                    return False
+            else:
+                # 判断是否奇遇之后进入的战斗，是则向前冲刺
+                if map_type == 0:
+                    res = self.recognition_level_type()
+                    if res == "0":
+                        for i in range(3):
+                            self.action_dodge_to_w()
+                            self.sleep(0.5)
+                return True
+        else:
+            # 校验是否有炮台
+            res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["单行"],pattern="操作")
+            if res:
+                print("奇遇炮台")
+                r = self.click_until_ocr(774,357,rect=[16,209,257,327],pattern="(炮台|积分)")
+                if not r:
+                    return False
+                self.click_until_color(mijin_color,"退出炮台确定",42,36)
+                self.sleep(1)
+                self.click_until_ocr(x=796, y=428, rect=[548,202,782,284], pattern="积分")
+                self.sleep(1)
+                for i in range(50):
+                    if self.is_text_re_in_ocr(rect=[8, 219, 244, 423], pattern="继续"):
+                        return True
+                    self.click(634,659,after_sleep=1)
+                return False
+            else:
+                # 判断是否有门，防止游戏bug导致卡死
+                if self.is_have_door():
+                    print("可能游戏bug！！！")
+                    self.level_to_to_next_level()
+
+    def level_other(self):
+        # 其他
+        # 商店卡死校验
+        r1 = self.is_text_re_in_ocr(rect=[85,4,157,57],pattern="烛芯")
+        r2 = self.find_my_color(common_color,"左上角红色退出")
+        if r1 and r2:
+            print("商店卡死，尝试修复----")
+            self.click(44,31)
+            self.sleep(3)
+            return True
+
+        res = self.ocr(rect=[4,0,1272,690])
+        if not res:
+            self.sleep(0.5)
+            return False
+
+        for r in res:
+            text = r.text
+            if self.re_matching("复苏", text):
+                self.click(636,633)
+                self.sleep(1)
+            elif self.re_matching("(选择1枚烛芯|刷新|探索详情)", text):
+                print("选择1枚烛芯")
+                self.select_buff()
+                self.level_start_time = time.time()
+                return True
+            elif self.re_matching("(获得遗物|获得烛芯|点击空白处关闭|激活套装|点击空白处继续)", text):
+                self.click(154, 510)
+                return True
+            elif self.re_matching("探索成功", text):
+                self.level_finish_count += 1
+                self.level_ok_count += 1
+                print(f"迷津完成,当前完成次数:{self.level_ok_count}")
+                self.ocr_gold()
+                self.click(1222, 55)
+                self.await_until_ocr(pattern="坠入深渊", time_out=30)
+                return True
+            elif self.re_matching("探索失败", text):
+                print("探索失败")
+                self.level_finish_count += 1
+                self.level_faile_count += 1
+                self.ocr_gold()
+                self.click(1222, 55)
+                return True
+            elif self.re_matching("上次探索过深渊", text):
+                self.click(392, 425)
+                self.click(1088, 687)
+                return True
+
+    def level_rest(self):
+        # 休整关卡
+        # 判断是否有任务
+        point = None
+        for i in range(5):
+            point = self.find_my_color(mijin_color,"任务")
+            if point:
+                break
+            self.sleep(0.1)
+
+        if point:
+            if (self.center_x - 50) < point.x < (self.center_x + 50):
+                # self.walk_to_color_disapper(mijin_color,"任务")
+                print("中间")
+                for i in range(4):
+                    self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                    self.sleep(0.2)
+                    self.walk_to_w()
+                    self.sleep(0.2)
+            else:
+                for i in range(6):
+                    self.walk_to_w(1000)
+                self.sleep(1)
+                self.walk_to_w(500)
+                self.sleep(1)
+                self.rotate_view_direction_to_front(mijin_color,"任务",2)
+                self.sleep(0.5)
+                self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                self.sleep(1)
+                self.walk_to_w(1000*3)
+                self.sleep(1)
+
+            r = self.find_my_color(mijin_color,"至暗幽影")
+            if r:
+                print("前方boss关卡，开始购物")
+                status_ = False
+                for i in range(20):
+                    self.rotate_view_to_middle_by_color(mijin_color,"任务")
+                    for k in range(3):
+                        res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["多行"],pattern="[烛芯]+")
+                        if res:
+                            status_ = True
+                            break
+                        self.sleep(0.5)
+                    if status_:
+                        break
+                    self.walk_to_w(300)
+                    self.sleep(0.5)
+
+                if not status_:
+                    print("查找商店失败")
+                    return False
+                
+                self.go_to_shop()
+            
+            self.level_to_to_next_level()
+        else:
+            # 原来是5
+            for i in range(6):
+                self.walk_to_w(1000)
+            self.sleep(1)
+            self.walk_to_w(500)
+            self.sleep(1)
+            self.level_to_to_next_level()
+
+    def combat(self):
+        # 战斗
+        # 识别boss
+        if self.is_boss() and self.is_boss_door:
+            if self.now_boss == "":
+                self.now_boss = self.ocr_boss()
+
+        if self.role == '水母':
+            self.role_combat_0()
+        elif self.role == '夫人':
+            self.role_combat_1()
+        elif self.role == '止流':
+            self.role_combat_2()
+
+    def recognition_level_type(self):
+        # 识别当前关卡类型
+        level_type = "-1"     # -1：其他 0：战斗 1：前往下一层 2：休整 3：奇遇
+        # res = self.ocr(rect=[7,199,255,368])
+        res = self.ocr(rect=[8,219,244,423])
+        if not res:
+            print(f"当前关卡类型：{self.level_type_dict[level_type]}")
+            return level_type
+
+        for r in res:
+            text = r.text
+            if self.re_matching("战斗", text):
+                level_type = "0"
+                break
+            elif self.re_matching("继续", text):
+                level_type = "1"
+                break
+            elif self.re_matching("休整", text):
+                level_type = "2"
+                break
+            elif self.re_matching("(奇遇|篝火)", text):
+                level_type = "3"
+                break
+        
+        print(f"当前关卡类型：{self.level_type_dict[level_type]}")
+        return level_type
 
     def rotate_to_combat_door(self):
         # 视角旋转至战斗门口
@@ -423,118 +883,6 @@ class AutoMijinTask(BaseTask):
         print("识别错误，不是找门")
         return False
 
-    def walk_to_door(self):
-        print("开始寻找门口")
-        start_time = time.time()
-        max_time = 60
-
-        # 校验是否有门，没有门则退出
-        if not self.is_have_door():
-            return False
-
-        # 判断是否有任务
-        point = None
-        for i in range(5):
-            point = self.find_my_color(mijin_color,"任务")
-            if point:
-                break
-            self.sleep(0.1)
-        if point:
-            if (self.center_x - 50) < point.x < (self.center_x + 50):
-                print("中间---")
-                self.walk_to_color_disapper(mijin_color,"任务")
-                self.go_to_shop()
-            else:
-                for i in range(2):
-                    self.action_jump_fly()
-                    self.sleep(1)
-
-                self.rotate_view_to_middle_by_color(mijin_color,"任务")
-                self.sleep(1)
-                self.walk_to_w(walk_time=500)
-                self.sleep(1)
-                
-                self.rotate_view_direction_range(mijin_color,"任务",0,250)
-
-                self.sleep(1)
-                self.action_jump_fly()
-                self.sleep(2)
-                self.reset_role_view()
-                self.go_to_shop()
-
-        self.rotate_view_to_down(400)
-
-        self.rotate_to_combat_door()
-
-        # if not self.level_restart_status:
-        #     self.quit_mijin_start()
-
-        door_names = ["至暗幽影", "深邃幽影", "离散幽影", "微茫幽影", "休整"]
-        for door_name in door_names:
-            while 1:
-                if time.time() - start_time > max_time:
-                    return False
-
-                if door_name == "至暗幽影":
-                    r1 = self.find_my_color(mijin_color,"至暗幽影")
-                    point = self.find_my_color(mijin_color,"任务")
-                    # print(f"至暗幽影---{r1}---{point}")
-                    if point and r1:
-                        if (self.center_x - 50) < point.x < (self.center_x + 50):
-                            print("中间---")
-                            self.walk_to_color_disapper(mijin_color,"任务")
-                            self.go_to_shop()
-                        else:
-                            for i in range(2):
-                                self.action_jump_fly()
-                                self.sleep(1)
-
-                            self.rotate_view_to_middle_by_color(mijin_color,"任务")
-                            self.sleep(1)
-                            self.walk_to_w(walk_time=500)
-                            self.sleep(1)
-
-                            self.rotate_view_direction_range(mijin_color,"任务",0,250)
-                            self.sleep(1)
-                            self.action_jump_fly()
-                            self.sleep(2)
-                            self.reset_role_view()
-                            self.go_to_shop()
-
-                    else:
-                        res = self.rotate_view_to_middle_by_color(mijin_color,door_name)
-                        if not res:
-                            break
-
-                        self.walk_to_w()
-                        self.sleep(0.5)
-                else:
-                    res = self.rotate_view_to_middle_by_color(mijin_color,door_name)
-                    if not res:
-                        break
-                    self.walk_to_w()
-                    self.sleep(0.5)
-
-                res = self.ocr(pattern=door_name)
-                if res:
-                    x = res[0].center_x
-                    y = res[0].center_y
-                    self.click(x, y)
-                    if door_name == "休整":
-                        pattern = "休整"
-                    else:
-                        pattern = "战斗"
-                    res = self.await_until_ocr(pattern=pattern, rect=[16,197,206,328])
-                    if res:
-                        print(f"成功进入---{door_name}")
-                        if door_name == "至暗幽影":
-                            pass
-                        self.init_now_level()
-                        self.is_map_jam_trees()
-                        return True
-
-                self.sleep(0.1)
-
     def is_map_jam_trees(self):
         # 判断是否卡死树木的地图
         res = self.find_my_color(mijin_color,"卡树地图")
@@ -545,63 +893,90 @@ class AutoMijinTask(BaseTask):
             self.action_jump_fly()
             return True
         else:
-            return
-            False
+            return False
 
     def go_to_shop(self):
         # 商店购物
         print("开始商店购物")
-        self.sleep(2)
-        r = None
-        for i in range(2):
-            r = self.await_until_click_ocr(pattern="烛芯兑换",time_out=5)
-            if r:
-                break
-            else:
-                self.walk_to_w(walk_time=300)
-                self.sleep(1)
 
-        if not r:
+        res = None
+        for i in range(5):
+            res = self.is_text_re_in_ocr(rect=self.interaction_text_rect["多行"],pattern="[烛芯]+")
+            if res:
+                break
+            self.sleep(0.2)
+
+        if not res:
             print("未识别到商店")
             return False
+
+        x = res[0].x
+        y = res[0].y
+        res = self.click_until_color(common_color,"左上角红色退出",x,y)
         
-        r = self.await_color(mijin_color,"右上角红色退出")
-        if not r:
+        if not res:
             print("进入商店失败")
             return False
 
         print("开始购买")
         for i in range(100):
-            r = self.find_my_color(mijin_color,"商店确认")
-            if not r:
-                break
+            res = self.find_my_color(common_color,"左上角红色退出")
+            if res:
+                r = self.find_my_color(mijin_color,"商店确认")
+                if not r:
+                    break
 
-            # 判断是否有钱购买
-            n = Colors.count("#DA2A4A-#1c0905",rect=[1117,610,1147,636],sim=0.9)
-            if n >10:
-                print("没有钱购买了")
-                break
-            
-            self.click(1112,654)
-            self.click(1241,592)
-            self.click(1241,592)
-            self.click_until_color(mijin_color,"右上角红色退出",1241,592)
-            self.sleep(1)
+                # 判断是否有钱购买
+                n = Colors.count("#DA2A4A-#1c0905",rect=[1117,610,1147,636],sim=0.9)
+                if n >10:
+                    print("没有钱购买了")
+                    break
 
-        self.click_until_color(mijin_color,"右上角红色退出",1241,592)
-        self.click_color_to_color(mijin_color,"右上角红色退出",common_color,"下蹲按钮",x=44,y=31)
+            for i in range(5):
+                self.click(96,173,after_sleep=0.1)
+                self.click(1114,659,after_sleep=0.1)
+
+            # 确保返回商店页面
+            for i in range(10):
+                if self.find_my_color(common_color,"左上角红色退出"):
+                    break
+                else:
+                    self.click(1241,592,after_sleep=0.1)
+            self.sleep(0.1)
+
+        for i in range(20):
+            self.click(1241,592,after_sleep=0.1)
+        
+        self.sleep(1)
+
+        for i in range(10):
+            if self.find_my_color(common_color,"左上角红色退出"):
+                self.click(44,31)
+                self.sleep(1)
+            else:
+                break
         self.sleep(1)
         
         # 校验商店是否退出
-        for i in range(5):
-            res = self.find_my_color(mijin_color,"右上角红色退出")
-            if res:
-                print("商店退出异常,重新尝试退出")
-                self.click(44,31)
-                self.sleep(3)
-            else:
-                print("商店退出成功")
-                break
+        res = self.await_until_ocr(rect=[8,219,244,423], pattern="休整")
+        if res:
+            print("商店退出成功")
+        else:
+            print("商店退出异常")
+
+        # for i in range(10):
+        #     if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="休整"):
+        #         print("商店退出成功")
+        #         break
+        #     self.sleep(1)
+        #
+        #     if res:
+        #         print("商店退出异常,重新尝试退出")
+        #         self.click(44,31)
+        #         self.sleep(3)
+        #     else:
+        #         print("商店退出成功")
+        #         break
 
         print("购买完成")
 
@@ -624,8 +999,9 @@ class AutoMijinTask(BaseTask):
         self.level_start_time = time.time()
         self.is_map_jam_trees()
 
-    def rotate_view_to_middle_by_color(self, color_dict, color_name):
+    def rotate_view_to_middle_by_color(self, color_dict, color_name, behind=False):
         # 根据颜色旋转视角至中间
+        # behind:释放开启后方检测
         start_time = time.time()  # 开始时间，超时则退出
         max_time = 60  # 最大超时时间
 
@@ -636,8 +1012,12 @@ class AutoMijinTask(BaseTask):
             point = self.find_my_color(color_dict,color_name)
             if point:
                 res = self.position_is_left_or_right(point.x, point.y)
-                if res == 1:
-                    return True
+                if behind:
+                    if res == 1:
+                        return True
+                else:
+                    if (res == 1) or (res == 3):
+                        return True
                 if abs(point.x-self.center_x) > 100:
                     # print("大幅度旋转")
                     self.rotate_view_to_close_by_ori(res,rotate_x=100)
@@ -680,9 +1060,16 @@ class AutoMijinTask(BaseTask):
                     print(f"获得时之纺线：{gold}")
                     self.gold += gold
                     break
+        self.refresh_log()
 
     def mijin_moling_boss(self):
         # boss战斗是否释放魔灵
         if time.time() - self.moling_boss_last_time >= self.moling_boss_max_time:
             self.skill_z()
             self.moling_boss_last_time = time.time()
+
+    def mijin_moling_common(self):
+        # 普通战斗是否释放魔灵
+        if time.time() - self.moling_common_last_time >= self.moling_common_max_time:
+            self.skill_z()
+            self.moling_common_last_time = time.time()

@@ -29,7 +29,6 @@ from ...res.task.AutoMozhixieTask import AutoMozhixieTask
 from ...res.task.AutoWeaponBreakTask import AutoWeaponBreakTask
 from ...res.task.AutoWeaponExpTask import AutoWeaponExpTask
 from ...res.task.AutoGameActivityTask import AutoGameActivityTask
-from ...res.task.AutoTestTask import AutoTestTask
 from ...res.task.AutoDailyTaskTask import AutoDailyTaskTask
 from ...res.task.AutoZEWeaponTask import AutoZEWeaponTask
 from ...res.task.AutoLMYYTask import AutoLMYYTask
@@ -54,7 +53,7 @@ import inspect
 def test11(uiconfig):
     time.sleep(2)
     # 迷津
-    # task = AutoTestTask(uiconfig)
+    # task = AutoMijinTask(uiconfig)
     # task.close_mijin()
 
     # 夜航手册
@@ -114,9 +113,6 @@ def test11(uiconfig):
     # task = AutoGameActivityTask(uiconfig)
     # task.level_qiju()
     # task.run()
-
-    # 测试类
-    # task = AutoTestTask(uiconfig)
 
     # 灾厄武器
     # task = AutoZEWeaponTask(uiconfig)

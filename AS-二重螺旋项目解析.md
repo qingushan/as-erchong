@@ -1,13 +1,14 @@
 # AS-二重螺旋项目解析
 
-> 本文档用于跨会话快速了解本项目。**后续代码有更新时，请同步更新本文档**（尤其是「任务清单」「架构」「更新记录」三节）。
+> 本文档用于跨会话快速了解本项目。**后续代码有更新时，请同步更新本文档**（尤其是「任务清单」「架构」两节）。
 >
-> 最后同步时间：2026-09-02（版本号由维护者发布时手动调整）
+> 最后同步时间：2026-10-08（版本号由维护者发布时手动调整）
 
 ## 一、项目概述
 
 - **项目名**：`erchong`（工作区 `d:\code\Ascript\erchong`）
-- **平台**：[AScript](https://www.ascript.cn/)（安卓自动化脚本框架，Python 语法，包名 `ascript.android.*`）
+- **平台**：AScript（安卓自动化脚本框架，Python 语法，包名 `ascript.android.*`）
+- **平台官网**：https://www.ascript.cn/
 - **目标游戏**：**二重螺旋**（包名 `com.hero.dna.gf`），支持**本地游戏**与**云游戏**两套坐标/流程
 - **功能**：全自动日常/刷本挂机脚本。通过 WebWindow 表单配置任务队列，按队列依次执行迷津、委托、突破、钓鱼等任务，并带掉线重连、定时下线、整点密函插队等调度逻辑
 - **分辨率强依赖**：脚本只在 **1280x720（横屏）** 下工作，所有坐标、找色、OCR 区域均以此为基准（`AppGame.check_screen` 启动时校验）
@@ -29,6 +30,7 @@ erchong/
 └── res/
     ├── config.py          # 全局配置：VERSION、屏幕尺寸、本地/云游戏按键坐标、技能CD
     ├── font.t             # 点阵字库（OcrX 用）
+    ├── img/               # 图片资源（code.png / logo.png；config.image_resource 目前无调用方）
     ├── assets/
     │   ├── color.py       # 本地游戏全部找色字典（按任务分组，见下）
     │   └── cloud_color.py # 云游戏找色字典
@@ -59,10 +61,13 @@ erchong/
     │   │                  #   （前面大量注释掉的单任务调试代码，调试时取消注释单跑）
     │   └── cloud_test.py  # 云游戏调试入口
     └── ui/                # WebWindow 前端（layui + jQuery）
-        ├── form.html      # 主配置窗体（约116KB，所有任务的参数页签都在这里）
+        ├── form.html      # 主配置窗体（约115KB，所有任务的参数页签都在这里）
+        ├── form.py        # 开发期单独调试窗体的临时入口，未接入主流程
         ├── log.html / mosaic.html / updateLogs.json（版本更新日志数据）
         ├── css/form.css
+        ├── layui/         # layui 框架（layui.js + css + iconfont 字体）
         └── js/
+            ├── jquery.min.js    # jQuery 运行时
             ├── form-options.js  # 常量：DEFAULT_FORM_DATA、CHECKBOX_FIELDS、TASK_TYPE_NAME_MAP
             ├── form-cache.js    # KeyValue 缓存读写（key: 'asdata'）
             ├── form-main.js     # 表单初始化/提交
@@ -77,12 +82,12 @@ erchong/
 2. 加载器读取项目根目录 `mode.json` 的 `mode`：缺失或非法时默认为 `remote`；`local` 直接加载工程内置代码，`cache` 只加载活动缓存。
 3. `remote` 模式检查 `dist/latest.json`：云手机优先访问阿里云 OSS 直链，GitHub Raw 作为备用；查询参数用于区分设备请求，OSS 直链不依赖缓存清理。
 4. 新发布包下载到 `/storage/emulated/0/AScript/erchong_runtime`，必须同时通过清单大小限制和 SHA-256 校验，随后解压到独立 `release_id` 目录并动态导入 `erchong_runtime.runtime_entry`。
-5. `remote` 模式在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程自带的 `.runtime_entry`，所以首次断网也能打开脚本。
+5. `remote` 模式在线更新失败时先加载 `active.json` 指向的上一次成功缓存；没有有效缓存时加载工程内置的 `runtime_entry`，所以首次断网也能打开脚本。
 6. `runtime_entry.py` 使用运行时包自己的 `res/ui/form.html` 弹出配置界面（80vw x 70vh），并 `setVersion` 显示版本。资源不再依赖原工程的 `R.ui/R.res`，远程包中的 UI、字库和图片可随 Python 同步更新。
 7. 用户在表单里配置全局项 + 任务队列，点击提交 → JS 把整个表单（含 `task_list` JSON 字符串）传给 Python `tunnel("submit", v)`。
 8. `tunnel` → `json.loads(v)` 得到 `uiconfig` 字典 → `test1.test11(uiconfig)` → `AppGame(uiconfig).run()` 进入正式调度。
 9. 表单配置通过 `KeyValue.save('asdata', ...)` 持久化，下次启动自动回填（form-cache.js）。
-10. 点击「运行」时 `tunnel("submit")` 先调 `BackendClient.start()` 上后台登记会话（注册 → 开始会话 → 独立线程定时心跳），失败只打印日志不影响任务；`test11` 返回后 `finally` 里尽力而为地发一次停止请求（详见「十一、后台上报」）。
+10. 点击「运行」时 `tunnel("submit")` 先调 `start_reporting(uiconfig, release_id)` 上后台登记会话（注册 → 开始会话 → 独立线程定时心跳），失败只打印日志不影响任务；`test11` 返回后 `finally` 里尽力而为地发一次停止请求（详见「十一、后台上报」）。
 
 ### uiconfig 关键字段
 - `task_list`：JSON 字符串，`[{"type": "mijin"}, ...]`，按顺序执行
@@ -100,10 +105,10 @@ erchong/
 本地游戏：
 BaseGame ──► BaseAction ─┐
 BaseGame ──► BaseFind  ──┴─► BaseTask ──► Auto*Task（各任务）
-CombatSkillController      由需要战斗技能的普通任务组合持有（self.combat_skill）
-                         ├─► CJSXJCombatController
-                         ├─► LMYYCombatController
-                         └─► ActivityCombatController
+CombatSkillController      普通任务组合持有（self.combat_skill）
+                         ├─► CJSXJCombatController     AutoCJSXJTask 持有 self.cjsxj_combat
+                         ├─► LMYYCombatController      AutoLMYYTask 持有 self.lmyy_combat
+                         └─► ActivityCombatController  AutoGameActivityTask 持有 self.activity_combat
 LogUi / MosaicUI           单例悬浮窗，BaseTask 持有 self.logui
 
 云游戏：
@@ -122,7 +127,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 
 ## 五、AppGame 调度器（res/task/AppGame.py）
 
-- **任务映射** `task_mapping`：type 字符串 → 任务类（注意：`"mijin"` 当前映射到 **AutoTestTask**，而不是 AutoMijinTask——迷津新逻辑在 AutoTestTask 里）。
+- **任务映射** `task_mapping`：type 字符串 → 任务类。`"mijin"` 映射到 **AutoMijinTask**（原 `AutoTestTask` 的新逻辑已整体并入该类并删除原文件，不再有"运行旧版本"兜底开关）。
 - **执行模型**：每个任务在独立 Thread 中 `task.run()`；主线程 join 等待。
 - **看门狗线程** `watchdog_logic`（每2秒）：
   - 掉线检测：前台应用不是"二重螺旋"或 OCR 到"连接失败"→ `ctypes.PyThreadState_SetAsyncExc` 强杀任务线程 → `close_game`（系统设置页停止应用）→ 等5分钟 → `open_game`（重启并处理更新弹窗/公告/签到）→ 重跑被中断任务。
@@ -134,7 +139,7 @@ CloudRoleSkillUtil(CloudBaseAction)
 | type | 名称 | 类 |
 |---|---|---|
 | daily_task | 日常任务 | AutoDailyTaskTask |
-| mijin | 迷津 | **AutoTestTask**（旧版 AutoMijinTask 保留） |
+| mijin | 迷津 | AutoMijinTask |
 | mod | 夜航手册 | AutoModTask |
 | jiaojiaobi | 皎皎币 | AutoJjbTask |
 | role_tupo | 角色突破 | AutoRoleBreakthroughTask |
@@ -169,10 +174,11 @@ CloudRoleSkillUtil(CloudBaseAction)
 - 本地技能代码统一位于 `res/combat/local/`。旧 `RoleSkillUtil` 已删除；`BaseTask` 不再无条件创建技能对象，只有实际需要普通技能循环的任务才组合持有 `CombatSkillController(self)`。
 - `CombatSkillController` 同时承担普通副本技能策略和四个控制器共享的基础能力：通过 `__getattr__` 将动作/识别委托给任务对象，统一提供 `_ready`、`_cast`、`_cast_z`、`reset` 等计时方法。
 - 普通控制器保留自定义技能以及赛琪、止流、灾厄武器角色等普通副本模组；沉浸式戏剧、联袂演绎、活动技能分别位于 `CJSXJCombatController`、`LMYYCombatController`、`ActivityCombatController`，不再混入普通控制器。
-- 四个控制器根据 `skill_type` 第一段统一映射并打印角色展示名称，例如 `8-1`、`8-2-2`、`8-4-1` 均显示“芙洛拉”；该名称只用于日志展示，不参与战斗分支判断。
+- 四个控制器根据 `skill_type` 第一段统一映射并打印角色展示名称（`ROLE_NAME_MAP`：0 自定义 / 1 赛琪 / 2 止流 / 3 苏乙 / 4 扶疏 / 5 猪妹 / 6 菲娜 / 7 煜明 / 8 芙洛拉 / 9 艾达 / 10 法露茜），例如 `8-1`、`8-2-2`、`8-4-1` 均显示“芙洛拉”，`10-4-1`/`10-4-2` 显示“法露茜”；该名称只用于日志展示，不参与战斗分支判断。
 - 三个专用控制器继承 `CombatSkillController` 的公共能力并各自维护技能状态；活动任务调用 `before()`、`start()`、`tick()`，沉浸式戏剧和联袂演绎调用各自的 `tick()`。
 - 活动芙洛拉（`8-4-1`/`8-4-2`）开场跳跃后，会在释放大招前调用 `rotate_view_to_middle_by_color(common_color, "任务黄色图标")`，把任务目标调整到视野中央。
 - 活动芙洛拉分组赛（`8-4-1`）以正式战斗循环开始时间计时，15 秒后切换第二阶段，重击间隔由 2 秒缩短为 0.8 秒、E 技能间隔改为 99999 秒；当前战斗循环中的自动右转处于关闭状态，进入下一局时恢复第一阶段参数。
+- 活动法露茜（`10-4-1`/`10-4-2`）：`before()` 先连续两次跳飞，再连放大招，随后 `rotate_view_to_middle_by_color(common_color, "任务黄色图标")` 把任务图标对到视野中央，最后跳飞 + 平A + 两次锁敌；`tick()` 按 Q→E→Z 冷却循环（`skill_q_max_time` 为 99999，大招仅在开场释放）。
 - `res/combat/cloud/` 已预留云游戏控制器包，但本次仅重构本地游戏；云任务仍使用 `res/util/CloudRoleSkillUtil.py`，调用路径和行为均未改变。
 - 支持各任务从 UI 注入自定义连招 `set_role_skill_config_custom`；该方法同时登记魔灵覆盖配置。控制器提供统一的 `apply_skill_z(max_time, max_count)`，并在每次技能模组重建或重置后自动恢复，因此任务层不再保留重复的 `add_moling_skill()` 中转方法。
 - 发布工具会把 `res/combat`、`res/combat/local`、`res/combat/cloud` 作为标准 Python 包写入运行时 ZIP；已有 `__init__.py` 使用源码文件，缺失时才补空文件，避免 ZIP 出现重复成员。
@@ -263,19 +269,3 @@ CloudRoleSkillUtil(CloudBaseAction)
 - TLS：后台是纯 IP + Caddy 自签证书（`https://123.57.172.142:8443`，ECS 未备案只有 8443 可用）。客户端用 `res/certs/backend-ca.crt` 固定校验，证书随运行时 ZIP 更新；固定校验失败或证书缺失时降级为不校验并打印告警。**降级是可接受的**：这条链路只承载统计上报，不承载可执行代码（清单与 ZIP 仍走 OSS/GitHub 的合法证书）。
 - 失败策略：所有异常在线程内吞掉，只打印日志，绝不冒泡到 `AppGame.run()`；后台完全不可达时脚本照常启动与执行，`start()` 立即返回（后台不在启动路径上，不影响 21.2 的 ≤3 秒启动约束）。
 - 排障关键字：`后台上报线程已启动` / `后台会话已开始` / `后台心跳失败` / `后台暂时不可达`；本机身份可用 `KeyValue.get('backend_identity')` 查看。
-
-## 十二、更新记录（Devin 维护，代码变更时在此追加）
-
-| 日期 | 版本 | 变更摘要 |
-|---|---|---|
-| 2026-09-13 | 待发版 | M6 脚本接入：新增 `res/util/BackendClient.py` 后台上报（install_id 持久化于 `KeyValue.backend_identity`、run_id 全局唯一、注册/开始会话/心跳/停止全部走独立守护线程，异常只打日志）；`runtime_entry` 在提交配置后启动上报、任务结束后尽力停止；全局配置新增「排行榜昵称」；新增 `res/certs/backend-ca.crt` 用于后台自签证书固定校验；运行时清单来源不变（仍为 OSS → GitHub），因此无需设备重新导入工程；未修改版本号 |
-| 2026-08-31 | 待发版 | 新增项目 `mode.json` 运行模式配置；配置页面改为通过 `ui_ready` 通知 Python 完成加载，再设置版本并自动展示更新日志，修复慢设备上函数未定义的问题；未修改版本号 |
-| 2026-08-30 | 待发版 | 远程运行时改用阿里云 OSS 直链作为主源、GitHub Raw 作为备用，移除公共缓存服务依赖；保留大小与 SHA-256 校验、内容寻址缓存及离线回退；脚本更新后首次打开配置界面自动展示“关于脚本”中的本次更新日志，每个发布包只展示一次；同步更新发布目录说明和上传顺序；未修改版本号 |
-| 2026-08-29 | 待发版 | 新增远程运行时加载、大小与 SHA-256 校验、内容寻址缓存、上次成功缓存及工程内置版本双重回退；Python 与 UI/字库/图片可同步更新；增加可重复发布构建工具；详细补充在线更新与构建流程的中文代码注释；未修改版本号 |
-| 2026-08-28 | 待发版 | 调整活动芙洛拉分组赛战斗节奏：前 30 秒保持循环旋转，满 30 秒后加快重击并停止自动释放 E 和旋转，同时支持每局重置阶段 |
-| 2026-08-26 | 待发版 | 本地游戏将沉浸式戏剧、联袂演绎、活动技能策略迁移到独立控制器；活动芙洛拉开场在放大招前自动对准黄色任务图标；云游戏暂不调整 |
-| 2026-08-22 | 待发版 | 增加委托密函任务与整点刷新执行委托密函互斥校验，冲突配置禁止启动 |
-| 2026-08-15 | 待发版 | 云-角色突破适配新版主菜单、角色突破入口及属性坐标；关键页面改用 OCR 识别 |
-| 2026-08-06 | 待发版 | 夜航手册每条副本配置新增独立扼守轮次；非扼守关卡忽略该字段并保持原逻辑 |
-| 2026-08-06 | v1.0.4.5 | 修复夜航手册 70 级第一个扼守关卡被误判为驱离、无法激活的问题 |
-| 2026-08-06 | v1.0.4.4 | 初版文档：通读全项目并生成本解析文件（无代码改动） |

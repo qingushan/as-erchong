@@ -27,9 +27,6 @@ from ...res.cloud_task.CloudAutoRoleBreakthroughTask import CloudAutoRoleBreakth
 from ...res.cloud_task.CloudAutoWeaponExpTask import CloudAutoWeaponExpTask
 from ...res.cloud_task.CloudAutoGameActivityTask import CloudAutoGameActivityTask
 
-# 测试
-from ...res.task.AutoTestTask import AutoTestTask
-
 # as
 from ascript.android.system import Device
 from airscript.intent import Intent 
@@ -67,7 +64,7 @@ class AppGame:
         # 任务映射表
         self.task_mapping = {
             "daily_task": AutoDailyTaskTask,
-            "mijin": AutoTestTask,
+            "mijin": AutoMijinTask,
             "mod": AutoModTask,
             "jiaojiaobi": AutoJjbTask,
             "role_tupo": AutoRoleBreakthroughTask,
