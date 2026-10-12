@@ -146,34 +146,16 @@ class ActivityCombatController(CombatSkillController):
 
             for _ in range(2):
                 self.action_jump_fly()
-        # elif self.skill_type in ("10-4-1","10-4-2"):
-        #     for _ in range(2):
-        #         self.action_jump_fly()
-        #         self.sleep(0.5)
-        #     self.sleep(1)
-        #
-        #     self.skill_q(after_sleep=4)
-        #     for i in range(4):
-        #         self.skill_q(after_sleep=2)
-        #
-        #     self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
-        #     self.sleep(1)
-        #
-        #     self.action_jump_fly(after_sleep=1)
-        #     self.action_jump_fly(after_sleep=0.5)
-        #     for i in range(10):
-        #         self.combat_left_click()
-        #     self.lock_enemy()
-        #     self.lock_enemy()
-        #     for i in range(10):
-        #         self.combat_left_click()
         elif self.skill_type in ("10-4-1","10-4-2"):
             for _ in range(2):
                 self.action_jump_fly()
                 self.sleep(0.5)
             self.sleep(1)
 
-            self.skill_q(after_sleep=15)
+            if self.skill_type == "10-4-1":
+                self.skill_q(after_sleep=15)
+            elif self.skill_type == "10-4-2":
+                self.skill_q(after_sleep=10)
 
             self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
             self.sleep(1)
@@ -203,8 +185,9 @@ class ActivityCombatController(CombatSkillController):
             for i in range(35):
                 self.combat_left_click()
 
-            for i in range(10):
-                self.skill_e(after_sleep=0.5)
+            if self.skill_type == "10-4-1":
+                for i in range(10):
+                    self.skill_e(after_sleep=0.5)
 
 
     def start(self):
@@ -327,5 +310,6 @@ class ActivityCombatController(CombatSkillController):
             self._cast("skill_q", self.skill_q, after_sleep=0.5)
             self._cast("skill_e", self.skill_e, after_sleep=0.5)
             self._cast_z()
+            self.lock_enemy()
             self.combat_left_click()
             self.sleep(0.1)

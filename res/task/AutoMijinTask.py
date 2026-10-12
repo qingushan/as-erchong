@@ -87,7 +87,8 @@ class AutoMijinTask(BaseTask):
         map_role = {
             '0':'水母',
             '1':'夫人',
-            '2':'止流'
+            '2':'止流',
+            '3':'海尔法',
         }
 
         if uiconfig:
@@ -129,6 +130,9 @@ class AutoMijinTask(BaseTask):
         elif self.role == '止流':
             self.level_max_time = 60*3
             self.skill_time["大招"] = 15
+        elif self.role == '海尔法':
+            self.level_max_time = 60 * 3
+            self.skill_time["小技能"] = 30
 
     def run(self):
         self.refresh_log()
@@ -485,6 +489,46 @@ class AutoMijinTask(BaseTask):
                 self.skill_2()
 
             self.mijin_moling_common()
+
+    def role_combat_3(self):
+        # 海尔法战斗
+        if self.is_boss():
+            self.skill_time["小技能"] = 30
+
+            # bosss战斗初始化时间防止超时
+            self.level_start_time = time.time()
+
+            # 判断是否boss大招
+            if self.find_my_color(cjsxj_color, "boss白色血条"):
+                print(f"{self.now_boss}----大招")
+                if self.now_boss in ['狼人', '雪国的野兽', '典狱长', '西比尔', '赛琪']:
+                    self.action_dodge_to_s()
+                    self.sleep(0.5)
+                    return True
+
+            if self.find_my_color(common_color, "BOSS处决"):
+                print("boss处决")
+                self.click(996, 248)
+
+            self.lock_enemy()
+            self.action_dodge_to_w()
+            self.sleep(1)
+            self.lock_enemy()
+
+            if self.skill_e_is_ok():
+                self.skill_e(after_sleep=1)
+
+            self.mijin_moling_boss()  # 魔灵
+
+            # self.combat_left_click()
+
+        else:
+            self.skill_time["小技能"] = 30
+
+            if self.skill_e_is_ok():
+                self.skill_e(after_sleep=1)
+
+            self.mijin_moling_common()
             
     def walk_to_task(self):
         # 前往任务
@@ -639,15 +683,16 @@ class AutoMijinTask(BaseTask):
                 else:
                     self.click(1030,648,after_sleep=0.1)
 
-            # # 校验是否成功回到主页面
-            # self.sleep(1)
-            # for i in range(10):
-            #     if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
-            #         break
+            # 校验是否成功回到主页面
+            self.sleep(1)
+            for i in range(10):
+                if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
+                    break
 
                 # 判断是否在退出页面
-                # if self.is_text_re_in_ocr(rect=[8,219,244,423], pattern="继续"):
-                #     break
+                if self.is_text_re_in_ocr(rect=[748,601,1260,692], pattern="(继续游戏|设置|角色技能|暂离|退出并结算)"):
+                    print("奇遇返回异常，退出页面！")
+                    self.click(800,640,after_sleep=2)
 
                 self.sleep(1)
 
@@ -834,6 +879,8 @@ class AutoMijinTask(BaseTask):
             self.role_combat_1()
         elif self.role == '止流':
             self.role_combat_2()
+        elif self.role == '海尔法':
+            self.role_combat_3()
 
     def recognition_level_type(self):
         # 识别当前关卡类型

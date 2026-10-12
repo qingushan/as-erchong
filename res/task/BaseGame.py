@@ -61,25 +61,17 @@ class BaseGame:
     def skill_e_is_ok(self):
         # 是否可以释放小技能
         r = (time.time() - self.skill_time["小技能_释放时间"]) > self.skill_time["小技能"]
-        n = Colors.count("#FFFFC3",rect=[832,598,897,664],sim=0.95)
-        # print(n)
         if r:
-            if n > 100:
-                return True
+            return True
 
         return False
 
     def skill_q_is_ok(self):
         # 是否可以释放大招
         r = (time.time() - self.skill_time["大招_释放时间"]) > self.skill_time["大招"]
-        n = Colors.count("#FFFFCC",rect=[921,602,976,657])
 
         if r:
             return True
-
-        # if r:
-        #     if n > 10:
-        #         return True
 
         return False
 

@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "release_id": "v2.0.0.18-e68d13421b14",
-  "app_version": "2.0.0.18",
-  "created_at": "2026-10-08T15:01:31+00:00",
+  "release_id": "v2.0.0.19-65d2a949b8d3",
+  "app_version": "2.0.0.19",
+  "created_at": "2026-10-12T14:28:57+00:00",
   "package": {
-    "path": "dist/releases/erchong-runtime-v2.0.0.18-e68d13421b14.zip",
-    "sha256": "e68d13421b140678ec953851229d8a23cbcc50394d9f7fac2b0514dd69ae8678",
-    "size": 711656
+    "path": "dist/releases/erchong-runtime-v2.0.0.19-65d2a949b8d3.zip",
+    "sha256": "65d2a949b8d35ab618892132c49353ebabe857f8d593cbe04619e8b52a458a44",
+    "size": 711617
   }
 }
