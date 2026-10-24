@@ -93,7 +93,7 @@ class AutoDailyTaskTask(BaseTask):
             self.click_until_ocr(x=res.x, y=res.y, rect=[647,527,949,580], pattern="[购买]+")
             self.sleep(1)
 
-            self.click(901,444,after_sleep=2)
+            self.click(980,448,after_sleep=2)
             self.click(796,553,after_sleep=3)
 
             self.click(634,687,after_sleep=2)
@@ -107,7 +107,7 @@ class AutoDailyTaskTask(BaseTask):
             self.click_until_ocr(x=res.x, y=res.y, rect=[647, 527, 949, 580], pattern="[购买]+")
             self.sleep(1)
 
-            self.click(901, 444, after_sleep=2)
+            self.click(980,448,after_sleep=2)
             self.click(796, 553, after_sleep=3)
 
             self.click(634, 687, after_sleep=2)

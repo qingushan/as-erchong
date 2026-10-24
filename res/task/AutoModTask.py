@@ -351,44 +351,8 @@ class AutoModTask(BaseTask):
 
     def go_to_activate_level_quli(self):
         # 驱离激活
-        if self.level_grade == 80:
-            if self.level_number == "第一个":
-                for i in range(3):
-                    self.action_jump_fly()
-                    self.sleep(0.5)
-            elif self.level_number == "第二个":
-                for i in range(3):
-                    self.action_jump_fly()
-                    self.sleep(0.5)
-            else:
-                self.action_jump_fly()
-                self.sleep(1)
-        elif self.level_grade == 75:
-            if self.level_number == "第二个":
-                for i in range(6):
-                    self.action_jump_fly()
-                    self.sleep(0.5)
-            elif self.level_number == "第三个":
-                for i in range(5):
-                    self.action_jump_fly()
-                    self.sleep(0.5)
-            elif self.level_number == "倒数第三个":
-                for i in range(2):
-                    self.action_jump_fly()
-                    self.sleep(0.5)
-            else:
-                self.action_jump_fly()
-                self.sleep(1)
-        else:
-            res = self.find_my_color(mod_color,"驱离电梯图")
-            if res:
-                print("电梯图")
-                self.sleep(1)
-                self.walk_to_w(1000*10)
-                self.sleep(5)
-            else:
-                self.action_jump_fly()
-                self.sleep(1)
+        self.action_jump_fly()
+        self.sleep(1)
 
     def check_esho_combat(self):
         # 检查扼守是否激活副本
@@ -641,27 +605,39 @@ class AutoModTask(BaseTask):
         if self.level_grade in [30, 50, 65]:
             self.level_type = '扼守'
         elif self.level_grade == 70:
-            if self.level_number == "第一个":
-                self.level_type = '驱离'
-            elif self.level_number == "第二个":
-                self.level_type = '驱离'
-            elif self.level_number == "第三个":
-                self.level_type = '扼守'
-            elif self.level_number == "第四个":
-                self.level_type = '扼守'
-            elif self.level_number == "第五个":
-                self.level_type = '扼守'
-            else:
-                self.level_type = '驱离'
+            self.level_type = '驱离'
         elif self.level_grade == 75:
             if self.level_number == "第一个":
                 self.level_type = '驱离'
             elif self.level_number == "第二个":
-                self.level_type = '驱离'
+                self.level_type = '扼守'
             elif self.level_number == "第三个":
                 self.level_type = '驱离'
             elif self.level_number == "第四个":
                 self.level_type = '扼守'
+            elif self.level_number == "第五个":
+                self.level_type = '驱离'
+            elif self.level_number == "倒数第一个":
+                self.level_type = '驱离'
+            elif self.level_number == "倒数第二个":
+                self.level_type = '驱离'
+            elif self.level_number == "倒数第三个":
+                self.level_type = '驱离'
+            elif self.level_number == "倒数第四个":
+                self.level_type = '驱离'
+            elif self.level_number == "倒数第五个":
+                self.level_type = '驱离'
+            else:
+                self.level_type = '驱离'
+        elif self.level_grade == 80:
+            if self.level_number == "第一个":
+                self.level_type = '驱离'
+            elif self.level_number == "第二个":
+                self.level_type = '扼守'
+            elif self.level_number == "第三个":
+                self.level_type = '驱离'
+            elif self.level_number == "第四个":
+                self.level_type = '驱离'
             elif self.level_number == "第五个":
                 self.level_type = '扼守'
             elif self.level_number == "倒数第一个":
@@ -669,21 +645,12 @@ class AutoModTask(BaseTask):
             elif self.level_number == "倒数第二个":
                 self.level_type = '扼守'
             elif self.level_number == "倒数第三个":
-                self.level_type = '驱离'
+                self.level_type = '扼守'
             elif self.level_number == "倒数第四个":
-                self.level_type = '驱离'
+                self.level_type = '扼守'
             elif self.level_number == "倒数第五个":
                 self.level_type = '扼守'
             else:
-                self.level_type = '驱离'
-        elif self.level_grade == 80:
-            if self.level_number == "第一个":
-                self.level_type = '驱离'
-            elif self.level_number == "第二个":
-                self.level_type = '驱离'
-            elif self.level_number == "第三个":
-                self.level_type = '扼守'
-            elif self.level_number == "第四个":
                 self.level_type = '扼守'
         elif self.level_grade == 60:
             if self.level_number == "60级驱逐":

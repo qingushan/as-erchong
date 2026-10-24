@@ -305,11 +305,13 @@ class AutoWeituomihanTask(BaseTask):
     def go_to_activate_level_quli(self):
         # 驱离激活，判断是否电梯图即可
         # 驱离，强制向前跳三下
-        for i in range(3):
-            self.action_jump_fly(after_sleep=2)
-        self.sleep(1)
-        self.walk_to_s()
-        self.sleep(1)
+        # for i in range(3):
+        #     self.action_jump_fly(after_sleep=2)
+        # self.sleep(1)
+        # self.walk_to_s()
+        # self.sleep(1)
+
+        self.action_jump_fly(after_sleep=2)
 
         return True
 
