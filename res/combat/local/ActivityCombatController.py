@@ -50,6 +50,12 @@ class ActivityCombatController(CombatSkillController):
             "skill_q_max_time": 99999, "skill_q_max_count": 1,
             "skill_e_max_time": 1, "skill_e_max_count": 1,
         },
+        "11-4-1": {
+            "skill_z_max_time": 10, "skill_z_max_count": 1,
+            "skill_q_max_time": 99999, "skill_q_max_count": 1,
+            "skill_e_max_time": 1, "skill_e_max_count": 1,
+            "click_left_max_time": 2,"click_left_last_time": 0
+        }
     }
 
     def configure(self, skill_type, skill_z_max_time=9999, skill_z_max_count=1):
@@ -188,6 +194,72 @@ class ActivityCombatController(CombatSkillController):
             if self.skill_type == "10-4-1":
                 for i in range(10):
                     self.skill_e(after_sleep=0.5)
+        elif self.skill_type in ("11-4-1", "11-4-2"):
+            # 新版狩月人之阶，地图可能会不一样
+            # 四张地图
+            # 直线上坡：619-647  633,216
+            # 正前方：624-650   637,271
+            # 上楼梯：>700
+            # 下方：<605
+            map_type = -1
+
+            res = None
+            for i in range(10):
+                res = self.find_my_color(common_color, "任务黄色图标")
+                if res:
+                    break
+                self.sleep(1)
+
+            if not res:
+                print("未识别到月阶地图！")
+                return False
+
+            if 632 < res.x < 634:
+                # 直线上坡
+                map_type = 0
+            elif 636 < res.x < 638:
+                # 正前方
+                map_type = 1
+            elif res.x > 700:
+                # 上楼梯
+                map_type = 2
+            elif res.x < 605:
+                # 下方
+                map_type = 3
+
+            print(f"当前地图:{map_type}")
+            if map_type == -1:
+                print("月阶地图异常！")
+                return False
+
+            if map_type == 0:
+                self.action_jump_fly()
+                self.sleep(2)
+            elif map_type == 1:
+                for _ in range(3):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+                self.sleep(1)
+            elif map_type == 2:
+                for _ in range(2):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+                self.sleep(1)
+
+                self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
+                self.sleep(1)
+
+                for _ in range(2):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+                self.sleep(1)
+
+            elif map_type == 3:
+                for _ in range(3):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+                self.sleep(1)
+
 
 
     def start(self):
@@ -312,4 +384,16 @@ class ActivityCombatController(CombatSkillController):
             self._cast_z()
             self.lock_enemy()
             self.combat_left_click()
+            self.sleep(0.1)
+        elif self.skill_type == "11-4-1":
+            self._cast("skill_q", self.skill_q, after_sleep=0.5)
+            if self._ready("skill_e"):
+                self.skill_e(dur=1000, after_sleep=0.1)
+                self.combat_left_click()
+                self.skill_config["skill_e_last_time"] = self.time()
+            # if self._ready("click_left_max_time"):
+            #     print("射击")
+            #     self.combat_left_click()
+            #     self.skill_config["click_left_last_time"] = self.time()
+            self._cast_z()
             self.sleep(0.1)

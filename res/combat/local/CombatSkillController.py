@@ -24,6 +24,7 @@ class CombatSkillController:
         "8": "芙洛拉",
         "9": "艾达",
         "10": "法露茜",
+        "11": "SP黎瑟"
     }
 
     def __init__(self, task):

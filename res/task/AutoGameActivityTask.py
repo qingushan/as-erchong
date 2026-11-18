@@ -95,7 +95,6 @@ class AutoGameActivityTask(BaseTask):
     def select_level_grade(self):
         # 选择等级
         if self.uiconfig['game_activity_get_score'] == "on":
-            # self.click(121,236)
             self.click(114, 315)
         else:
             if self.level_grade == 60:
@@ -167,7 +166,7 @@ class AutoGameActivityTask(BaseTask):
         # self.click_until_ocr(x=1073, y=680, rect=[79,9,274,64], pattern="(狩月|之阶)")
         # self.sleep(1)
 
-        self.sleep(2)
+        self.sleep(5)
         print(f"成功进入---{self.game_activity_name}")
         return True
 
@@ -182,14 +181,16 @@ class AutoGameActivityTask(BaseTask):
         if self.uiconfig['game_activity_get_score'] == 'on':
             res = self.find_my_color(game_activity_color,"狩月人之阶_分组赛_主界面")
             if res:
-                self.click_color_to_color(game_activity_color,"狩月人之阶_分组赛_主界面",common_color,"角色血条-绿色",x=1074,y=675,out_time=60)
+                self.click_color_to_color(game_activity_color,"狩月人之阶_分组赛_主界面",common_color,"角色血条-绿色",x=1066,y=675,out_time=60)
+                self.await_until_ocr(rect=[15,213,267,320],pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
                 return True
 
             res = self.find_my_color(game_activity_color,"狩月人之阶_挑战完成")
             if res:
-                self.click_color_to_color(game_activity_color,"狩月人之阶_挑战完成",common_color,"角色血条-绿色",x=521,y=667,out_time=60)
+                self.click_color_to_color(game_activity_color,"狩月人之阶_挑战完成",common_color,"角色血条-绿色",x=793,y=632,out_time=60)
+                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
                 return True
@@ -197,6 +198,7 @@ class AutoGameActivityTask(BaseTask):
             res = self.find_my_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币")
             if res:
                 self.click_color_to_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币",common_color,"角色血条-绿色",x=1114,y=675,out_time=60)
+                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
                 return True
@@ -204,6 +206,7 @@ class AutoGameActivityTask(BaseTask):
             res = self.find_my_color(game_activity_color,"狩月人之阶_挑战完成")
             if res:
                 self.click_color_to_color(game_activity_color,"狩月人之阶_挑战完成",common_color,"角色血条-绿色",x=521,y=667,out_time=60)
+                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
                 return True
@@ -302,7 +305,7 @@ class AutoGameActivityTask(BaseTask):
         while 1:
             res = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
             if res:
-                if self.is_text_re_in_ocr(rect=[400,637,867,687],pattern="(重新开始|退出)"):
+                if self.is_text_re_in_ocr(rect=[169,495,1129,696],pattern="(快遠前往|退出|前往)"):
                     print("挑战成功")
                     self.sleep(1)
                     self.get_score()
@@ -402,6 +405,9 @@ class AutoGameActivityTask(BaseTask):
         self.logui.change_log_text(text)
 
     def run(self):
+        # res = self.find_my_color(common_color, "任务黄色图标")
+        # print(res)
+        # exit()
         self.init_task()
         self.refresh_log()
 
@@ -409,7 +415,7 @@ class AutoGameActivityTask(BaseTask):
         if not res:
             return False
         
-        self.select_level_grade()
+        # self.select_level_grade()
 
         while 1:
             self.refresh_log()
