@@ -53,7 +53,7 @@ class ActivityCombatController(CombatSkillController):
         "11-4-1": {
             "skill_z_max_time": 10, "skill_z_max_count": 1,
             "skill_q_max_time": 99999, "skill_q_max_count": 1,
-            "skill_e_max_time": 1, "skill_e_max_count": 1,
+            "skill_e_max_time": 0, "skill_e_max_count": 1,
             "click_left_max_time": 2,"click_left_last_time": 0
         }
     }
@@ -233,8 +233,20 @@ class ActivityCombatController(CombatSkillController):
                 return False
 
             if map_type == 0:
+                self.walk_to_d(walk_time=350)
+                self.sleep(1)
+                for _ in range(4):
+                    self.action_jump_fly()
+                    self.sleep(0.5)
+
+                self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
+                self.sleep(1)
+
+                self.rotate_view_to_top(slide_distance=70)
+                self.sleep(0.5)
+
                 self.action_jump_fly()
-                self.sleep(2)
+                # self.sleep(2)
             elif map_type == 1:
                 for _ in range(3):
                     self.action_jump_fly()
@@ -249,16 +261,28 @@ class ActivityCombatController(CombatSkillController):
                 self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
                 self.sleep(1)
 
-                for _ in range(2):
+                for _ in range(1):
                     self.action_jump_fly()
-                    self.sleep(0.5)
-                self.sleep(1)
+                    self.sleep(1)
+
+                self.rotate_view_to_top(slide_distance=70)
+                self.sleep(0.5)
+
+                self.action_jump_fly()
+                # self.sleep(1)
 
             elif map_type == 3:
                 for _ in range(3):
                     self.action_jump_fly()
                     self.sleep(0.5)
                 self.sleep(1)
+
+            # 开启大招
+            for i in range(3):
+                self.skill_q(after_sleep=0.2)
+            self.sleep(2.5)
+
+        return True
 
 
 
@@ -386,14 +410,10 @@ class ActivityCombatController(CombatSkillController):
             self.combat_left_click()
             self.sleep(0.1)
         elif self.skill_type == "11-4-1":
-            self._cast("skill_q", self.skill_q, after_sleep=0.5)
+            # self._cast("skill_q", self.skill_q, after_sleep=3)
             if self._ready("skill_e"):
                 self.skill_e(dur=1000, after_sleep=0.1)
                 self.combat_left_click()
                 self.skill_config["skill_e_last_time"] = self.time()
-            # if self._ready("click_left_max_time"):
-            #     print("射击")
-            #     self.combat_left_click()
-            #     self.skill_config["click_left_last_time"] = self.time()
             self._cast_z()
             self.sleep(0.1)
