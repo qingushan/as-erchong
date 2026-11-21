@@ -63,7 +63,7 @@ class AutoGameActivityTask(BaseTask):
     def init_task(self):
         # 初始化
         self.game_activity_name = self.uiconfig['game_activity_name']
-        self.level_grade = int(self.uiconfig['game_activity_grade'])
+        # self.level_grade = int(self.uiconfig['game_activity_grade'])
         self.level_max_count = int(self.uiconfig['game_activity_max_num'])
         self.level_skill_z_time = float(self.uiconfig['game_activity_skill_z_time'])
         self.level_skill_z_count = int(self.uiconfig['game_activity_skill_z_count'])
@@ -189,12 +189,14 @@ class AutoGameActivityTask(BaseTask):
 
             if res1:
                 self.click_color_to_color(game_activity_color,"狩月人之阶_分组赛_主界面",common_color,"角色血条-绿色",x=1066,y=675,out_time=60)
+                self.sleep(2)
                 self.await_until_ocr(rect=[15,213,267,320],pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
                 return True
             elif res2:
                 self.click_color_to_color(game_activity_color, "狩月人之阶_挑战完成", common_color, "角色血条-绿色",x=793, y=632, out_time=60)
+                self.sleep(2)
                 self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
                 print("成功进入副本")
@@ -203,6 +205,33 @@ class AutoGameActivityTask(BaseTask):
             print("未识别到界面")
             return False
         else:
+            res1 = None
+            res2 = None
+            for i in range(10):
+                res1 = self.find_my_color(game_activity_color, "狩月人之阶_主界面_狩月纪念币")
+                res2 = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
+                if res1 or res2:
+                    break
+
+            if res1:
+                self.click_color_to_color(game_activity_color, "狩月人之阶_主界面_狩月纪念币", common_color,"角色血条-绿色", x=1114, y=675, out_time=60)
+                self.sleep(2)
+                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
+                self.sleep(2)
+                print("成功进入副本")
+                return True
+            elif res2:
+                self.click_color_to_color(game_activity_color, "狩月人之阶_挑战完成", common_color, "角色血条-绿色",x=301, y=632, out_time=60) # x=521, y=667
+
+                self.sleep(2)
+                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
+                self.sleep(2)
+                print("成功进入副本")
+                return True
+
+            print("未识别到界面")
+            return False
+
             res = self.find_my_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币")
             if res:
                 self.click_color_to_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币",common_color,"角色血条-绿色",x=1114,y=675,out_time=60)

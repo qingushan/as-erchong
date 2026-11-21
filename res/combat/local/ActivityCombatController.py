@@ -52,9 +52,11 @@ class ActivityCombatController(CombatSkillController):
         },
         "11-4-1": {
             "skill_z_max_time": 10, "skill_z_max_count": 1,
-            "skill_q_max_time": 99999, "skill_q_max_count": 1,
-            "skill_e_max_time": 0, "skill_e_max_count": 1,
-            "click_left_max_time": 2,"click_left_last_time": 0
+            "skill_e_max_time": 0, "skill_e_max_count": 1
+        },
+        "11-4-2": {
+            "skill_z_max_time": 10, "skill_z_max_count": 1,
+            "skill_e_max_time": 0, "skill_e_max_count": 1
         }
     }
 
@@ -242,6 +244,9 @@ class ActivityCombatController(CombatSkillController):
                 self.rotate_view_to_middle_by_color(common_color, "任务黄色图标")
                 self.sleep(1)
 
+                self.walk_to_w(walk_time=500)
+                self.sleep(1)
+
                 self.rotate_view_to_top(slide_distance=70)
                 self.sleep(0.5)
 
@@ -409,7 +414,7 @@ class ActivityCombatController(CombatSkillController):
             self.lock_enemy()
             self.combat_left_click()
             self.sleep(0.1)
-        elif self.skill_type == "11-4-1":
+        elif self.skill_type in ("11-4-1","11-4-2"):
             # self._cast("skill_q", self.skill_q, after_sleep=3)
             if self._ready("skill_e"):
                 self.skill_e(dur=1000, after_sleep=0.1)

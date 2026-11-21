@@ -1,7 +1,7 @@
 import os as _os
 
 
-VERSION = "2.0.0.21"
+VERSION = "2.0.0.22"
 
 # 远程运行时会被解压到原 AScript 工程之外，因此资源路径必须以当前运行时包
 # 为基准，不能继续依赖 R.ui/R.res。这样远程下载的 Python 才能与同一发布包
@@ -33,7 +33,7 @@ WALK_BUTTON_CENTER_X = 209
 WALK_BUTTON_CENTER_Y = 553
 
 action_button_position = {
-    "小技能": (896,644),
+    "小技能": (896,665),
     "大招": (982,643),
     "魔灵技": (1112,643),
     "近战攻击": (1115,504),
