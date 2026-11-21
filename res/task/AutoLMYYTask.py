@@ -550,11 +550,21 @@ class AutoLMYYTask(BaseTask):
 
         max_time = 60 * 9999
 
+        # 战前处理
+        if self.lmyy_role == "11-3":
+            self.action_jump_fly(after_sleep=0.8)
+            # 开启大招
+            for i in range(3):
+                self.skill_q(after_sleep=0.2)
+            self.sleep(2.5)
+
         while 1:
-            res = self.is_text_re_in_ocr(rect=[531,614,754,658],pattern="离开")
+            res = self.is_text_re_in_ocr(rect=[109,559,1217,688],pattern="(离开|舞台)")
             if res:
                 print("战斗完成")
-                self.click_until_ocr(x=637, y=635, rect=[84, 632, 237, 696], pattern="筛选",time_out=60)
+                x = res[0].x
+                y = res[0].y
+                self.click_until_ocr(x=x, y=y, rect=[84, 632, 237, 696], pattern="筛选",time_out=60)
                 self.sleep(1)
                 return True
 

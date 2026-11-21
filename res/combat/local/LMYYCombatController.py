@@ -25,6 +25,10 @@ class LMYYCombatController(CombatSkillController):
                     "skill_e_max_count": 1, "skill_z_max_time": 10,
                     "skill_z_max_count": 1, "dodge_to_w_max_time": 9999,
                     "skill_click_max_time": 1, "click_lock_boss_max_time": 1},
+            "11-3": {
+                "skill_z_max_time": 10, "skill_z_max_count": 1,
+                "skill_e_max_time": 0, "skill_e_max_count": 1
+            },
         }.get(skill_type, {})
         self.skill_config["lmyy_trace_boss"] = trace_boss
         self.reset()
@@ -76,3 +80,9 @@ class LMYYCombatController(CombatSkillController):
             self._cast("dodge_to_w", lambda after_sleep=0: self.action_dodge_to_w())
             self._cast_z()
             self.combat_left_click()
+        elif self.skill_type == "11-3":
+            if self._ready("skill_e"):
+                self.skill_e(dur=1000, after_sleep=0.1)
+                self.combat_left_click()
+                self.skill_config["skill_e_last_time"] = self.time()
+            self._cast_z()

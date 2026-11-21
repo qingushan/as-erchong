@@ -170,7 +170,7 @@ class AutoGameActivityTask(BaseTask):
         print(f"成功进入---{self.game_activity_name}")
         return True
 
-    def go_in_level(self):
+    def go_in_level(self,combat_status=True):
         # 进入副本
         self.init_skill_time()
         self.is_lock_enemy = False
@@ -221,8 +221,13 @@ class AutoGameActivityTask(BaseTask):
                 print("成功进入副本")
                 return True
             elif res2:
-                self.click_color_to_color(game_activity_color, "狩月人之阶_挑战完成", common_color, "角色血条-绿色",x=301, y=632, out_time=60) # x=521, y=667
-
+                if combat_status:
+                    x = 301
+                    y = 632
+                else:
+                    x = 791
+                    y = 631
+                self.click_color_to_color(game_activity_color, "狩月人之阶_挑战完成", common_color, "角色血条-绿色",x=x, y=y, out_time=60) # x=521, y=667
                 self.sleep(2)
                 self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
                 self.sleep(2)
@@ -231,22 +236,6 @@ class AutoGameActivityTask(BaseTask):
 
             print("未识别到界面")
             return False
-
-            res = self.find_my_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币")
-            if res:
-                self.click_color_to_color(game_activity_color,"狩月人之阶_主界面_狩月纪念币",common_color,"角色血条-绿色",x=1114,y=675,out_time=60)
-                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
-                self.sleep(2)
-                print("成功进入副本")
-                return True
-
-            res = self.find_my_color(game_activity_color,"狩月人之阶_挑战完成")
-            if res:
-                self.click_color_to_color(game_activity_color,"狩月人之阶_挑战完成",common_color,"角色血条-绿色",x=521,y=667,out_time=60)
-                self.await_until_ocr(rect=[15, 213, 267, 320], pattern="(前往目标点|开启挑战)")
-                self.sleep(2)
-                print("成功进入副本")
-                return True
         
         return False
 
@@ -340,7 +329,15 @@ class AutoGameActivityTask(BaseTask):
         print("开始战斗")
         self.activity_combat.start()
 
+        start_time = self.time()
+        max_time = 60 * 1.6
+
         while 1:
+            if self.time() - start_time > max_time:
+                print("战斗异常超时，退出")
+                self.quit_level()
+                return False
+
             res = self.find_my_color(game_activity_color, "狩月人之阶_挑战完成")
             if res:
                 if self.is_text_re_in_ocr(rect=[212,586,1033,720],pattern="(重新|开始)"):
@@ -460,6 +457,10 @@ class AutoGameActivityTask(BaseTask):
         
         # self.select_level_grade()
 
+
+        combat_status = True    # 战斗结果
+
+
         while 1:
             self.refresh_log()
 
@@ -477,7 +478,7 @@ class AutoGameActivityTask(BaseTask):
                     self.level_exit()
                     return True
             
-            self.go_in_level()
+            self.go_in_level(combat_status=combat_status)
 
             res = self.combat_befor()
             if not res:
@@ -495,10 +496,12 @@ class AutoGameActivityTask(BaseTask):
 
             res = self.combat()
             if res:
+                combat_status = True
                 self.sleep(2)
                 self.level_finish_count += 1
                 self.level_ok_count += 1
             else:
+                combat_status = False
                 self.sleep(2)
                 self.level_finish_count += 1
                 self.level_faile_count += 1
